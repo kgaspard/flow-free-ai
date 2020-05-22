@@ -66,5 +66,5 @@ class Graphics:
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
                 if self.game.game_state.board_occupancy[x][y].value >= 0 and not self.game.game_state.board_occupancy[x][y].isValve:
-                    self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y]], diameter_percent = 0.3)
+                    self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y].value], diameter_percent = 0.3)
         self.root.after(self.main_config['update_ms'],self.update_from_game_state)

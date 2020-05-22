@@ -62,3 +62,6 @@ class PriorityQueue:
                 break
         else:
             self.push(item, priority)
+    
+    def items(self):
+        return list(item for _, _, item in self.heap)
