@@ -9,7 +9,7 @@ class Game:
     def __init__( self, size, num_pairs, valves=[]):
         self.start_time = datetime.now()
         self.size = size
-        self.num_pairs = len(valves) if valves else num_pairs
+        self.num_pairs = int(len(valves)/2) if valves else num_pairs
         self.valves = valves or self.randomise_valves()
         self.game_state = GameState(self)
         self.graphics = Graphics(self)
@@ -63,4 +63,4 @@ class GameState:
         return states
 
     def update(self,position_tuple,value):
-        self.board_occupancy[position_tuple[0]][position_tuple[1]].value = value
+        if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isValve: self.board_occupancy[position_tuple[0]][position_tuple[1]].value = value
