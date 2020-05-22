@@ -38,12 +38,13 @@ class Graphics:
                 , tag='grid_line', width = 2, fill=color)
         return {'x_0': x_0, 'y_0': y_0, 'square_size': square_size, 'x': x, 'y': y}
     
-    def create_circle_in_grid_pos(self, x, y, color, diameter_percent = 0.8, **kwargs):
+    def create_circle_in_grid_pos(self, x, y, color, diameter_percent = 0.8, stipple=100, **kwargs):
         grid_obj = self.flow_grid
         x = grid_obj['x_0'] + (x+0.5)*grid_obj['square_size']
         y = grid_obj['y_0'] + (y+0.5)*grid_obj['square_size']
         r = grid_obj['square_size']*diameter_percent / 2
-        return self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=color, **kwargs)
+        stipple = '' if stipple == 100 else 'gray'+str(stipple)
+        return self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=color, stipple=stipple, **kwargs)
 
     def init_frame(self):
         root = self.root

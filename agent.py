@@ -8,7 +8,8 @@ class AgentState:
         self.value = value
     
     def __repr__(self):
-        return '['+str(self.pos)+','+str(self.value)+']'
+        return str(self.pos)
+        # return '['+str(self.pos)+','+str(self.value)+']'
 
     def __eq__(self,other):
         return self.pos == other.pos and self.value == other.value
@@ -26,7 +27,7 @@ class Agent:
         valid_moves = []
         x,y = agent_state.pos
         if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value)): valid_moves.append('North')
-        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value)): valid_moves.append('South')
+        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value)): valid_moves.append('South')
         if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value)): valid_moves.append('West')
         if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value)): valid_moves.append('East')
         return valid_moves
@@ -102,11 +103,13 @@ class Agent:
                 if not next_solution:
                     for state in solution:
                         self.update_game_state(pos=state.pos,value = -1)
+                else:
+                    return next_solution
         
         
 
 game = Game((5,5),4, util.sample_valves())
 agent = Agent(game)
 print('done',agent.solve_recursively())
-# print(util.get_duration(game.start_time,'game solved'))
+print(util.get_duration(game.start_time,'game solved'))
 game.draw()
