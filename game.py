@@ -1,4 +1,5 @@
 from graphics import Graphics
+from datetime import datetime
 import math, random
 import util
 import numpy
@@ -6,11 +7,13 @@ import numpy
 class Game:
 
     def __init__( self, size, num_pairs, valves=[]):
+        self.start_time = datetime.now()
         self.size = size
         self.num_pairs = len(valves) if valves else num_pairs
         self.valves = valves or self.randomise_valves()
         self.game_state = GameState(self)
         self.graphics = Graphics(self)
+        print(util.get_duration(self.start_time,'game initiated'))
 
     def randomise_valves(self):
         valves = []
@@ -28,22 +31,36 @@ class Game:
     def draw(self):
         self.graphics.init_frame()
 
+class Cell:
+    def __init__( self):
+        self.isValve = False
+        self.value = -1
+    
+    def __repr__(self):
+        if self.isValve: return 'V'+str(self.value)
+        else: return str(self.value)
+    
 class GameState:
 
     def __init__( self, game):
         self.game = game
-        self.board_occupancy = numpy.full((game.size[0],game.size[1]),-1)
-        self.valve_map = numpy.full((game.size[0],game.size[1]),-1)
+        self.board_occupancy = numpy.empty(shape=[game.size[0],game.size[1]], dtype = Cell)
+        # have to do this loop to ensure each instance is separate cell
+        for x in range(len(self.board_occupancy)):
+            for y in range(len(self.board_occupancy[x])):
+                self.board_occupancy[x][y] = Cell()
         for valve in game.valves:
-            self.board_occupancy[valve[1][0]][valve[1][1]] = valve[0]
-            self.valve_map[valve[1][0]][valve[1][1]] = valve[0]
+            self.board_occupancy[valve[1][0]][valve[1][1]].isValve = True
+            self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
 
     def print(self):
-        print(self.valve_map)
+        print(self.board_occupancy)
 
     def update(self,position_tuple,value):
         self.board_occupancy[position_tuple[0]][position_tuple[1]] = value
-        self.game.graphics.create_circle_in_grid_pos(x=position_tuple[0], y=position_tuple[1], color=self.game.graphics.colors[value], diameter_percent = 0.3)
+        # self.game.graphics.create_circle_in_grid_pos(x=position_tuple[0], y=position_tuple[1], color=self.game.graphics.colors[value], diameter_percent = 0.3)
+
+
 
 class Agent:
 
@@ -75,6 +92,7 @@ class Agent:
     #                 visited.append(new_state)
 
 game = Game((5,5),4, util.sample_valves())
+game.game_state.print()
 game.draw()
-agent = Agent(game)
-agent.update_state()
+# agent = Agent(game)
+# agent.update_state()

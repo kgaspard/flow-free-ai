@@ -1,4 +1,5 @@
 import random, heapq
+from datetime import datetime
 
 def random_color():
     return "#" + "%06x" % random.randint(0, 0xFFFFFF)
@@ -20,6 +21,9 @@ def checkAdjacency(tuple1,tuple2):
 
 def sample_valves(index=0):
     return [[0,(3,0)],[0,(0,2)],[1,(4,0)],[1,(3,1)],[2,(2,1)],[2,(1,3)],[3,(0,3)],[3,(4,3)],[4,(3,3)],[4,(4,4)]]
+
+def get_duration(start_time, message = None):
+    return str((datetime.now() - start_time).total_seconds()*1000)+' ms'+(' - '+message or '')
 
 class PriorityQueue:
     """

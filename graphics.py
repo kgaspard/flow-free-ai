@@ -1,6 +1,6 @@
 import tkinter as tk
 import random
-import math
+import time
 import util
 
 class Graphics:
@@ -11,6 +11,8 @@ class Graphics:
         main_config['height'] = 1200
         main_config['bg'] = 'black'
         main_config['title'] = 'Grid'
+        main_config['frame_rate'] = 2
+        main_config['update_ms'] = int((1/main_config['frame_rate'])*1000)
         self.main_config = main_config
         self.game = game
         self.root = tk.Tk()
@@ -53,11 +55,16 @@ class Graphics:
         root.geometry(str(config['width'] or 800)+'x'+str(config['height'] or 600))
         root.configure(bg=config['bg'] or 'black')
 
-        # Draw initial objects
+        # Draw initial objects (valves)
         for valve in self.game.valves:
             self.create_circle_in_grid_pos(x=valve[1][0], y=valve[1][1], color=self.colors[valve[0]])
+        print(util.get_duration(self.game.start_time,'game drawn'))
+        root.after(0,self.update_from_game_state)
+        root.mainloop()
+
+    def update_from_game_state(self, event=None):
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
-                if self.game.game_state.board_occupancy[x][y] >= 0 and self.game.game_state.valve_map[x][y] == -1:
+                if self.game.game_state.board_occupancy[x][y].value >= 0 and not self.game.game_state.board_occupancy[x][y].isValve:
                     self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y]], diameter_percent = 0.3)
-        root.mainloop()
+        self.root.after(self.main_config['update_ms'],self.update_from_game_state)
