@@ -23,31 +23,37 @@ class Agent:
     def update_game_state(self,pos,value):
         self.game.game_state.update(pos,value)
     
-    def get_valid_moves(self,agent_state):
-        valid_moves = []
-        x,y = agent_state.pos
-        if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value)): valid_moves.append('North')
-        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value)): valid_moves.append('South')
-        if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value)): valid_moves.append('West')
-        if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value)): valid_moves.append('East')
-        return valid_moves
-    
-    def get_next_agent_state_from_action(self,agent_state,action):
-        x,y = agent_state.pos
-        new_pos = agent_state.pos
-        if action == 'North': new_pos = (x,y-1)
-        if action == 'South': new_pos = (x,y+1)
-        if action == 'West': new_pos = (x-1,y)
-        if action == 'East': new_pos = (x+1,y)
-        new_agent_state = AgentState(pos=new_pos, value=agent_state.value)
-        return new_agent_state
-    
     def get_valid_neighbouring_agent_states(self,agent_state):
-        neighbouring_agent_states = []
-        cost = 0
-        for action in self.get_valid_moves(agent_state):
-            neighbouring_agent_states.append((self.get_next_agent_state_from_action(agent_state,action),action,cost))
-        return neighbouring_agent_states
+        valid_neighbouring_agent_states = []
+        x,y = agent_state.pos
+        if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value)):
+            valid_neighbouring_agent_states.append(AgentState(pos=(x,y-1),value=agent_state.value)) # North
+        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value)):
+            valid_neighbouring_agent_states.append(AgentState(pos=(x,y+1),value=agent_state.value)) # South
+        if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value)):
+            valid_neighbouring_agent_states.append(AgentState(pos=(x-1,y),value=agent_state.value)) # West
+        if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value)):
+            valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
+        return valid_neighbouring_agent_states
+
+    def get_next_states_from_path(self,path):
+        if not path: return None
+        current_state = path[-1]
+        next_states = self.get_valid_neighbouring_agent_states(current_state)
+        if len(path) < 2: return next_states
+        next_states.remove(path[-2]) # don't allow direct backtracking. We take care of this anyway in the search algorithm
+        new_next_states = []
+        for next_state in next_states:
+            direction_vector = util.tupleAdd(next_state.pos,util.tupleScale(current_state.pos,-1))
+            forward_tracked_positions = [util.tupleAdd(next_state.pos,direction_vector), util.tupleAdd(next_state.pos,util.tupleSwap(direction_vector)), util.tupleAdd(next_state.pos,util.tupleScale(util.tupleSwap(direction_vector),-1))]
+            forward_tracked_states = [AgentState(pos=pos,value=current_state.value) for pos in forward_tracked_positions]
+            add_state = True
+            for forward_tracked_state in forward_tracked_states:
+                if forward_tracked_state in path:
+                    add_state = False
+                    break
+            if add_state: new_next_states.append(next_state)
+        return new_next_states
         
     def graphSearch(self,start_state,goal_state,cost_function,**kwargs):
         all_solutions = kwargs.get('all_solutions', None)
@@ -64,10 +70,9 @@ class Agent:
                     solution_paths.append(path)
                 else:
                     return [path]
-            for successor in self.get_valid_neighbouring_agent_states(state):
-                new_state, action, cost = successor
+            for new_state in self.get_valid_neighbouring_agent_states(state):
                 if ((not all_solutions) and new_state not in global_visited) or (all_solutions and new_state not in path):
-                    cost = cost_function(total_cost,cost)
+                    cost = cost_function(total_cost,new_state)
                     heuristic_value = heuristic(new_state) if heuristic else 0
                     priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
                     if not all_solutions: global_visited.append(new_state)
@@ -89,11 +94,10 @@ class Agent:
         return paths
     
     def solve_recursively(self,value=0):
+        print('valve: ',value)
         solutions = self.solve_for_value(value=value,all_solutions=True)
-        print('all: ',value,solutions)
         if not solutions: return solutions
         for solution in solutions:
-            print(value,solution)
             for state in solution:
                 self.update_game_state(pos=state.pos,value = state.value)
             if value == self.game.num_pairs - 1:
@@ -105,11 +109,3 @@ class Agent:
                         self.update_game_state(pos=state.pos,value = -1)
                 else:
                     return next_solution
-        
-        
-
-game = Game((5,5),4, util.sample_valves())
-agent = Agent(game)
-print('done',agent.solve_recursively())
-print(util.get_duration(game.start_time,'game solved'))
-game.draw()
