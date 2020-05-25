@@ -1,6 +1,7 @@
 from game import Game
 import time
 import util
+from util import Search
 
 class AgentState:
     def __init__(self,pos = (0,0), value = -1):
@@ -13,6 +14,9 @@ class AgentState:
 
     def __eq__(self,other):
         return self.pos == other.pos and self.value == other.value
+
+    def manhattanDistance(self,other):
+        return abs(self.pos[0] - other.pos[0]) + abs(self.pos[1] - other.pos[1])
 
 class Agent:
 
@@ -54,58 +58,34 @@ class Agent:
                     break
             if add_state: new_next_states.append(next_state)
         return new_next_states
-        
-    def graphSearch(self,start_state,goal_state,cost_function,**kwargs):
-        all_solutions = kwargs.get('all_solutions', None)
-        priority_queue = util.PriorityQueue()
-        priority_queue.push((start_state,[start_state],0),0)
-        global_visited = [start_state]   # need to use list for Python as can't have nested sets. Ok as anyway checking if exists before inserting
-        heuristic = kwargs.get('heuristic', None)
-        solution_paths = []
 
-        while not priority_queue.isEmpty():
-            state, path, total_cost = priority_queue.pop()
-            if state == goal_state:
-                if all_solutions:
-                    solution_paths.append(path)
-                else:
-                    return [path]
-            for new_state in self.get_valid_neighbouring_agent_states(state):
-                if ((not all_solutions) and new_state not in global_visited) or (all_solutions and new_state not in path):
-                    cost = cost_function(total_cost,new_state)
-                    heuristic_value = heuristic(new_state) if heuristic else 0
-                    priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
-                    if not all_solutions: global_visited.append(new_state)
-        return solution_paths
-    
-    def breadthFirstSearch(self,start_state,goal_state,**kwargs):
-        fn = lambda x,y : x+1
-        return self.graphSearch(start_state,goal_state, fn, **kwargs)
-
-    def depthFirstSearch(self,start_state,goal_state,**kwargs):
-        fn = lambda x,y : x-1
-        return self.graphSearch(start_state,goal_state, fn, **kwargs)
-
-    def solve_for_value(self,value,all_solutions):
+    def solve_for_value(self,value,all_solutions=False, priority_queue=None):
         valves = [valve for valve in self.game.valves if valve[0]==value]
         start_state = AgentState(pos=valves[0][1],value=valves[0][0])
         goal_state = AgentState(pos=valves[1][1],value=valves[1][0])
-        paths = self.breadthFirstSearch(start_state=start_state,goal_state=goal_state,all_solutions=all_solutions)
-        return paths
-    
-    def solve_recursively(self,value=0):
-        print('valve: ',value)
-        solutions = self.solve_for_value(value=value,all_solutions=True)
-        if not solutions: return solutions
-        for solution in solutions:
-            for state in solution:
+        search = Search()
+        paths,new_priority_queue = search.breadthFirstSearch(start_state=start_state,goal_state=goal_state,next_states_function=self.get_valid_neighbouring_agent_states,all_solutions=all_solutions, priority_queue=priority_queue, return_priority_queue=True)
+        if paths:
+            for state in paths[0]:
                 self.update_game_state(pos=state.pos,value = state.value)
-            if value == self.game.num_pairs - 1:
-                return solution
-            else:
-                next_solution = self.solve_recursively(value=value+1)
-                if not next_solution:
-                    for state in solution:
-                        self.update_game_state(pos=state.pos,value = -1)
+        return paths,new_priority_queue
+    
+    def solve_recursively(self,value=0,priority_queue=None):
+        # print('valve:',value)
+        solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
+        if not solutions: return solutions
+        for state in solutions[0]:
+            self.update_game_state(pos=state.pos,value = state.value)
+        if value == self.game.num_pairs - 1:
+            return solutions[0]
+        else:
+            next_solution = self.solve_recursively(value=value+1)
+            if not next_solution:
+                for state in solutions[0]:
+                    self.update_game_state(pos=state.pos,value = -1)
+                if priority_queue.items():
+                    return self.solve_recursively(value=value,priority_queue=priority_queue)
                 else:
-                    return next_solution
+                    return []
+            else:
+                return next_solution

@@ -35,7 +35,7 @@ def tupleAdd(tuple1,tuple2):
     return tuple(map(lambda i, j: i - j, tuple1, tuple2))
 
 def tupleScale(tuple1,scalar):
-    return tuple(map(lambda i: i * scalar, tuple1)) 
+    return tuple(map(lambda i: i * scalar, tuple1))
 
 class PriorityQueue:
     """
@@ -77,3 +77,41 @@ class PriorityQueue:
     
     def items(self):
         return list(item for _, _, item in self.heap)
+
+class Search:
+    def  __init__(self):
+        pass
+
+    def graphSearch(self, start_state, goal_state, next_states_function, cost_function, priority_queue=None, return_priority_queue=False, all_solutions=False, **kwargs):
+        priority_queue = priority_queue or PriorityQueue()
+        if not priority_queue.items(): priority_queue.push((start_state,[start_state],0),0)
+        heuristic = kwargs.get('heuristic', None)
+        solution_paths = []
+
+        while not priority_queue.isEmpty():
+            state, path, total_cost = priority_queue.pop()
+            if state == goal_state:
+                if all_solutions:
+                    solution_paths.append(path)
+                else:
+                    if return_priority_queue:
+                        return [path],priority_queue
+                    else:
+                        return [path]
+            for new_state in next_states_function(state):
+                if new_state not in path:
+                    cost = cost_function(total_cost,new_state)
+                    heuristic_value = heuristic(new_state) if heuristic else 0
+                    priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
+        if return_priority_queue:
+            return solution_paths,priority_queue
+        else:
+            return solution_paths
+    
+    def breadthFirstSearch(self,start_state,goal_state,next_states_function,**kwargs):
+        fn = lambda x,y : x+1
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=fn, **kwargs)
+
+    def depthFirstSearch(self,start_state,goal_state,next_states_function, **kwargs):
+        fn = lambda x,y : x-1
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=fn, **kwargs)
