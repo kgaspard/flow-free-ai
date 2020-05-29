@@ -26,7 +26,7 @@ def tupleSwap(tuple):
     return (tuple[1],tuple[0])
 
 def tupleAdd(tuple1,tuple2):
-    return tuple(map(lambda i, j: i - j, tuple1, tuple2))
+    return tuple(map(lambda i, j: i + j, tuple1, tuple2))
 
 def tupleScale(tuple1,scalar):
     return tuple(map(lambda i: i * scalar, tuple1))
@@ -103,7 +103,7 @@ class Search:
                         return [path]
             for new_state in next_states_function(path):
                 cost = 1
-                if ((not all_solutions) and new_state not in path) or (all_solutions and new_state not in path):
+                if new_state not in path:
                     cost = cost_function(total_cost,cost)
                     heuristic_value = heuristic(new_state) if heuristic else 0
                     priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
@@ -118,9 +118,9 @@ class Search:
         return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=cost_function, **kwargs)
 
     def depthFirstSearch(self,start_state,goal_state,next_states_function, **kwargs):
-        cost_function = lambda x,y : x-1
-        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=cost_function, **kwargs)
-    
+        fn = lambda x,y : x-1
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=fn, **kwargs)
+
     def aStarSearch(self,start_state,goal_state,next_states_function, **kwargs):
         cost_function = lambda x,y : x+y
         heuristic = lambda state: manhattanDistance(state.pos,goal_state.pos)

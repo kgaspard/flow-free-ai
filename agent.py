@@ -42,7 +42,7 @@ class Agent:
         for pos in pos_path:
             state_path.append(AgentState(pos,value))
         return state_path
-    
+        
     def get_next_states_from_path(self,path):
         if not path: return None
         current_state = path[-1]
@@ -72,10 +72,8 @@ class Agent:
             for state in paths[0]:
                 self.update_game_state(pos=state.pos,value = state.value)
         return paths,new_priority_queue
-    
+
     def solve_recursively(self,value=0,priority_queue=None):
-        print('valve:',value)
-        # self.game.game_state.print()
         solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
         print(solutions,priority_queue.items())
         if not solutions: return solutions
@@ -84,7 +82,7 @@ class Agent:
         if value == self.game.num_pairs - 1:
             return solutions[0]
         else:
-            next_solution = self.solve_recursively(value=value+1)
+            next_solution = self.solve_recursively(value=value+1,priority_queue=None)
             if not next_solution:
                 for state in solutions[0]:
                     self.update_game_state(pos=state.pos,value = -1)
