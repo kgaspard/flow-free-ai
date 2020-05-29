@@ -64,3 +64,8 @@ class GameState:
 
     def update(self,position_tuple,value):
         if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isValve: self.board_occupancy[position_tuple[0]][position_tuple[1]].value = value
+
+def generate_game(game_name):
+    if game_name == 'small': return Game((5,5),4,[[0,(3,0)],[0,(0,2)],[1,(4,0)],[1,(3,1)],[2,(2,1)],[2,(1,3)],[3,(0,3)],[3,(4,3)],[4,(3,3)],[4,(4,4)]])
+    if game_name == 'medium': return Game((8,8),4,[[0,(2,0)],[0,(3,4)],[1,(3,0)],[1,(1,1)],[2,(2,1)],[2,(1,6)],[3,(2,2)],[3,(5,5)]])
+    if game_name == 'big': return Game((14,14),12,[[0,(5,1)],[0,(10,3)],[1,(3,3)],[1,(9,7)],[2,(3,5)],[2,(2,11)],[3,(5,5)],[3,(8,6)],[4,(10,5)],[4,(8,7)],[5,(1,6)],[5,(6,7)],[6,(5,6)],[6,(3,11)],[7,(6,8)],[7,(11,13)],[8,(9,9)],[8,(5,11)],[9,(1,10)],[9,(7,10)],[10,(12,13)],[10,(13,12)],[11,(12,6)],[11,(6,13)]])

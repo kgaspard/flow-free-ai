@@ -40,6 +40,12 @@ class Agent:
             valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
         return valid_neighbouring_agent_states
 
+    def pos_path_to_state_path(self,pos_path,value):
+        state_path = []
+        for pos in pos_path:
+            state_path.append(AgentState(pos,value))
+        return state_path
+
     def get_next_states_from_path(self,path):
         if not path: return None
         current_state = path[-1]
@@ -64,14 +70,13 @@ class Agent:
         start_state = AgentState(pos=valves[0][1],value=valves[0][0])
         goal_state = AgentState(pos=valves[1][1],value=valves[1][0])
         search = Search()
-        paths,new_priority_queue = search.breadthFirstSearch(start_state=start_state,goal_state=goal_state,next_states_function=self.get_valid_neighbouring_agent_states,all_solutions=all_solutions, priority_queue=priority_queue, return_priority_queue=True)
+        paths,new_priority_queue = search.aStarSearch(start_state=start_state,goal_state=goal_state,next_states_function=self.get_next_states_from_path,all_solutions=all_solutions, priority_queue=priority_queue, return_priority_queue=True)
         if paths:
             for state in paths[0]:
                 self.update_game_state(pos=state.pos,value = state.value)
         return paths,new_priority_queue
-    
+
     def solve_recursively(self,value=0,priority_queue=None):
-        # print('valve:',value)
         solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
         if not solutions: return solutions
         for state in solutions[0]:
@@ -79,7 +84,7 @@ class Agent:
         if value == self.game.num_pairs - 1:
             return solutions[0]
         else:
-            next_solution = self.solve_recursively(value=value+1)
+            next_solution = self.solve_recursively(value=value+1,priority_queue=None)
             if not next_solution:
                 for state in solutions[0]:
                     self.update_game_state(pos=state.pos,value = -1)
