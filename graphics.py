@@ -11,7 +11,7 @@ class Graphics:
         main_config['height'] = 1200
         main_config['bg'] = 'black'
         main_config['title'] = 'Grid'
-        main_config['frame_rate'] = 2
+        main_config['frame_rate'] = 5
         main_config['update_ms'] = int((1/main_config['frame_rate'])*1000)
         self.main_config = main_config
         self.game = game
@@ -66,6 +66,9 @@ class Graphics:
     def update_from_game_state(self, event=None):
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
-                if self.game.game_state.board_occupancy[x][y].value >= 0 and not self.game.game_state.board_occupancy[x][y].isValve:
-                    self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y].value], diameter_percent = 0.3)
+                if not self.game.game_state.board_occupancy[x][y].isValve:
+                    if self.game.game_state.board_occupancy[x][y].value >= 0:
+                        self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y].value], diameter_percent = 0.3)
+                    elif self.game.game_state.board_occupancy[x][y].value < 0:
+                        self.create_circle_in_grid_pos(x=x, y=y, color=self.main_config['bg'], diameter_percent = 0.3)
         self.root.after(self.main_config['update_ms'],self.update_from_game_state)

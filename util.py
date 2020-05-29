@@ -19,12 +19,6 @@ def checkAdjacency(tuple1,tuple2):
     elif tuple1[1] == tuple2[1] and abs(tuple1[0] - tuple2[0]) <= 1: return True
     else: return False
 
-def sample_valves():
-    return [[0,(3,0)],[0,(0,2)],[1,(4,0)],[1,(3,1)],[2,(2,1)],[2,(1,3)],[3,(0,3)],[3,(4,3)],[4,(3,3)],[4,(4,4)]]
-
-def sample_valves_big():
-    return [[0,(5,1)],[0,(10,3)],[1,(3,3)],[1,(9,7)],[2,(3,5)],[2,(2,11)],[3,(5,5)],[3,(8,6)],[4,(10,5)],[4,(8,7)],[5,(1,6)],[5,(6,7)],[6,(5,6)],[6,(3,11)],[7,(6,8)],[7,(11,13)],[8,(9,9)],[8,(5,11)],[9,(1,10)],[9,(7,10)],[10,(12,13)],[10,(13,12)],[11,(12,6)],[11,(6,13)]]
-
 def get_duration(start_time, message = None):
     return str((datetime.now() - start_time).total_seconds()*1000)+' ms'+(' - '+message or '')
 
@@ -36,6 +30,9 @@ def tupleAdd(tuple1,tuple2):
 
 def tupleScale(tuple1,scalar):
     return tuple(map(lambda i: i * scalar, tuple1))
+
+def manhattanDistance(tuple1,tuple2):
+    return abs(tuple1[0] - tuple2[0]) + abs(tuple1[1] - tuple2[1])
 
 class PriorityQueue:
     """
@@ -85,11 +82,17 @@ class Search:
     def graphSearch(self, start_state, goal_state, next_states_function, cost_function, priority_queue=None, return_priority_queue=False, all_solutions=False, **kwargs):
         priority_queue = priority_queue or PriorityQueue()
         if not priority_queue.items(): priority_queue.push((start_state,[start_state],0),0)
+        visited = []   # need to use list for Python as can't have nested sets. Ok as anyway checking if exists before inserting
+        first_pop = True
         heuristic = kwargs.get('heuristic', None)
         solution_paths = []
 
         while not priority_queue.isEmpty():
             state, path, total_cost = priority_queue.pop()
+            # print(path,priority_queue.items())
+            if first_pop:
+                visited = path
+                first_pop = False
             if state == goal_state:
                 if all_solutions:
                     solution_paths.append(path)
@@ -98,20 +101,27 @@ class Search:
                         return [path],priority_queue
                     else:
                         return [path]
-            for new_state in next_states_function(state):
-                if new_state not in path:
-                    cost = cost_function(total_cost,new_state)
+            for new_state in next_states_function(path):
+                cost = 1
+                if ((not all_solutions) and new_state not in path) or (all_solutions and new_state not in path):
+                    cost = cost_function(total_cost,cost)
                     heuristic_value = heuristic(new_state) if heuristic else 0
                     priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
+                    if not all_solutions: visited.append(new_state)
         if return_priority_queue:
             return solution_paths,priority_queue
         else:
             return solution_paths
     
     def breadthFirstSearch(self,start_state,goal_state,next_states_function,**kwargs):
-        fn = lambda x,y : x+1
-        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=fn, **kwargs)
+        cost_function = lambda x,y : x+1
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=cost_function, **kwargs)
 
     def depthFirstSearch(self,start_state,goal_state,next_states_function, **kwargs):
-        fn = lambda x,y : x-1
-        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=fn, **kwargs)
+        cost_function = lambda x,y : x-1
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=cost_function, **kwargs)
+    
+    def aStarSearch(self,start_state,goal_state,next_states_function, **kwargs):
+        cost_function = lambda x,y : x+y
+        heuristic = lambda state: manhattanDistance(state.pos,goal_state.pos)
+        return self.graphSearch(start_state=start_state,goal_state=goal_state, next_states_function=next_states_function, cost_function=cost_function, heuristic=heuristic, **kwargs)

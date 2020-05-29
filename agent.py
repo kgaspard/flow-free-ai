@@ -15,9 +15,6 @@ class AgentState:
     def __eq__(self,other):
         return self.pos == other.pos and self.value == other.value
 
-    def manhattanDistance(self,other):
-        return abs(self.pos[0] - other.pos[0]) + abs(self.pos[1] - other.pos[1])
-
 class Agent:
 
     def __init__( self, game):
@@ -40,17 +37,24 @@ class Agent:
             valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
         return valid_neighbouring_agent_states
 
+    def pos_path_to_state_path(self,pos_path,value):
+        state_path = []
+        for pos in pos_path:
+            state_path.append(AgentState(pos,value))
+        return state_path
+    
     def get_next_states_from_path(self,path):
         if not path: return None
         current_state = path[-1]
         next_states = self.get_valid_neighbouring_agent_states(current_state)
         if len(path) < 2: return next_states
-        next_states.remove(path[-2]) # don't allow direct backtracking. We take care of this anyway in the search algorithm
         new_next_states = []
         for next_state in next_states:
+            if next_state==path[-2]: continue
             direction_vector = util.tupleAdd(next_state.pos,util.tupleScale(current_state.pos,-1))
             forward_tracked_positions = [util.tupleAdd(next_state.pos,direction_vector), util.tupleAdd(next_state.pos,util.tupleSwap(direction_vector)), util.tupleAdd(next_state.pos,util.tupleScale(util.tupleSwap(direction_vector),-1))]
-            forward_tracked_states = [AgentState(pos=pos,value=current_state.value) for pos in forward_tracked_positions]
+            forward_tracked_states = self.get_valid_neighbouring_agent_states(next_state)
+            forward_tracked_states.remove(current_state)
             add_state = True
             for forward_tracked_state in forward_tracked_states:
                 if forward_tracked_state in path:
@@ -63,16 +67,17 @@ class Agent:
         valves = [valve for valve in self.game.valves if valve[0]==value]
         start_state = AgentState(pos=valves[0][1],value=valves[0][0])
         goal_state = AgentState(pos=valves[1][1],value=valves[1][0])
-        search = Search()
-        paths,new_priority_queue = search.breadthFirstSearch(start_state=start_state,goal_state=goal_state,next_states_function=self.get_valid_neighbouring_agent_states,all_solutions=all_solutions, priority_queue=priority_queue, return_priority_queue=True)
+        paths,new_priority_queue = Search().aStarSearch(start_state=start_state,goal_state=goal_state,next_states_function=self.get_next_states_from_path,all_solutions=all_solutions, priority_queue=priority_queue, return_priority_queue=True)
         if paths:
             for state in paths[0]:
                 self.update_game_state(pos=state.pos,value = state.value)
         return paths,new_priority_queue
     
     def solve_recursively(self,value=0,priority_queue=None):
-        # print('valve:',value)
+        print('valve:',value)
+        # self.game.game_state.print()
         solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
+        print(solutions,priority_queue.items())
         if not solutions: return solutions
         for state in solutions[0]:
             self.update_game_state(pos=state.pos,value = state.value)
