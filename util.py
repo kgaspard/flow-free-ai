@@ -82,17 +82,11 @@ class Search:
     def graphSearch(self, start_state, goal_state, next_states_function, cost_function, priority_queue=None, return_priority_queue=False, all_solutions=False, **kwargs):
         priority_queue = priority_queue or PriorityQueue()
         if not priority_queue.items(): priority_queue.push((start_state,[start_state],0),0)
-        visited = []   # need to use list for Python as can't have nested sets. Ok as anyway checking if exists before inserting
-        first_pop = True
         heuristic = kwargs.get('heuristic', None)
         solution_paths = []
 
         while not priority_queue.isEmpty():
             state, path, total_cost = priority_queue.pop()
-            # print(path,priority_queue.items())
-            if first_pop:
-                visited = path
-                first_pop = False
             if state == goal_state:
                 if all_solutions:
                     solution_paths.append(path)
@@ -107,7 +101,6 @@ class Search:
                     cost = cost_function(total_cost,cost)
                     heuristic_value = heuristic(new_state) if heuristic else 0
                     priority_queue.push((new_state,path+[new_state],cost),cost + heuristic_value)
-                    if not all_solutions: visited.append(new_state)
         if return_priority_queue:
             return solution_paths,priority_queue
         else:

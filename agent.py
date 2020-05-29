@@ -75,7 +75,6 @@ class Agent:
 
     def solve_recursively(self,value=0,priority_queue=None):
         solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
-        print(solutions,priority_queue.items())
         if not solutions: return solutions
         for state in solutions[0]:
             self.update_game_state(pos=state.pos,value = state.value)
