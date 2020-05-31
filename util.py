@@ -34,6 +34,9 @@ def tupleScale(tuple1,scalar):
 def manhattanDistance(tuple1,tuple2):
     return abs(tuple1[0] - tuple2[0]) + abs(tuple1[1] - tuple2[1])
 
+def pickRandomElement(input_list):
+    return random.choice(input_list)
+
 class PriorityQueue:
     """
       Implements a priority queue data structure. Each inserted item

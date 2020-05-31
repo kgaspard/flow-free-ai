@@ -32,9 +32,10 @@ class Game:
         self.graphics.init_frame()
 
 class Cell:
-    def __init__(self, value = -1, isValve = False):
+    def __init__(self, value = -1, isValve = False, isStartValve=False):
         self.value = value
         self.isValve = isValve
+        self.isStartValve = isStartValve
     
     def __repr__(self):
         if self.isValve: return 'V'+str(self.value)
@@ -56,7 +57,9 @@ class GameState:
             self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
         self.path_edges = []
         for i in range(game.num_pairs):
-            self.path_edges.append(game.valves[i*2][1])
+            valve = game.valves[i*2]
+            self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
+            self.path_edges.append(valve[1])
 
     def print(self):
         print(self.board_occupancy)
@@ -93,6 +96,9 @@ class GameState:
         for path_edge in self.path_edges:
             new_game_state.path_edges.append(path_edge)
         return new_game_state
+    
+    def reset(self):
+        self.__init__(self.game)
     
     def __eq__(self,other):
         comparison = self.board_occupancy == other.board_occupancy

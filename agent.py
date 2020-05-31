@@ -29,13 +29,13 @@ class Agent:
     def get_valid_neighbouring_agent_states(self,agent_state):
         valid_neighbouring_agent_states = []
         x,y = agent_state.pos
-        if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value)):
+        if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value and not self.game.game_state.board_occupancy[x][y-1].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x,y-1),value=agent_state.value)) # North
-        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value)):
+        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value and not self.game.game_state.board_occupancy[x][y+1].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x,y+1),value=agent_state.value)) # South
-        if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value)):
+        if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value and not self.game.game_state.board_occupancy[x-1][y].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x-1,y),value=agent_state.value)) # West
-        if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value)):
+        if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value and not self.game.game_state.board_occupancy[x+1][y].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
         return valid_neighbouring_agent_states
     
@@ -105,15 +105,19 @@ class Agent:
             goal_agent_state = AgentState(game_state.game.valves[2*i+1][1],game_state.game.valves[2*i+1][0])
             if agent_state != goal_agent_state:
                 valid_actions += [(i,next_state.pos) for next_state in self.get_valid_neighbouring_agent_states(agent_state)]
+        if not valid_actions: valid_actions.append('exit')
         return valid_actions
     
     def get_next_game_state_from_action(self,game_state,action):
-        new_game_state = game_state.copy()
-        new_game_state.update(action[1],action[0])
-        return new_game_state
+        if action != 'exit':
+            new_game_state = game_state.copy()
+            new_game_state.update(action[1],action[0])
+            return new_game_state
 
     def get_next_game_states_from_state(self,game_state):
-        return [self.get_next_game_state_from_action(game_state,action) for action in self.get_valid_game_state_actions(game_state)]
+        actions = self.get_valid_game_state_actions(game_state)
+        if actions == ['exit']: return []
+        else: return [self.get_next_game_state_from_action(game_state,action) for action in self.get_valid_game_state_actions(game_state)]
     
     def solve(self):
         goal_state_checker_function = lambda game_state: game_state.check_complete()
@@ -124,3 +128,19 @@ class Agent:
             ,track_visited=True)
         self.game.game_state = solution
         return solution
+
+class QLearningAgent(Agent):
+    
+    def play_game(self):
+        next_state = self.game.game_state
+        while not self.game.game_state.check_complete() and next_state:
+            next_states = self.get_next_game_states_from_state(self.game.game_state)
+            if next_states:
+                next_state = util.pickRandomElement(next_states)
+                self.game.game_state = next_state
+            else: next_state = None
+        result = 0
+        if self.game.game_state.check_complete(): result = 1
+        elif not next_state: result = -1
+        self.game.game_state.reset()
+        return result
