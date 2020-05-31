@@ -1,4 +1,4 @@
-from game import Game
+from game import Game,GameState
 import time
 import util
 from util import Search
@@ -16,6 +16,8 @@ class AgentState:
         return self.pos == other.pos and self.value == other.value
 
 class Agent:
+
+    # General:
 
     def __init__( self, game):
         self.game = game
@@ -36,6 +38,8 @@ class Agent:
         if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
         return valid_neighbouring_agent_states
+    
+    # Agent State based:
 
     def pos_path_to_state_path(self,pos_path,value):
         state_path = []
@@ -91,3 +95,32 @@ class Agent:
                     return []
             else:
                 return next_solution
+    
+    # Game State based:
+
+    def get_valid_game_state_actions(self,game_state):
+        valid_actions = []
+        for i in range(len(game_state.path_edges)):
+            agent_state = AgentState(game_state.path_edges[i],i)
+            goal_agent_state = AgentState(game_state.game.valves[2*i+1][1],game_state.game.valves[2*i+1][0])
+            if agent_state != goal_agent_state:
+                valid_actions += [(i,next_state.pos) for next_state in self.get_valid_neighbouring_agent_states(agent_state)]
+        return valid_actions
+    
+    def get_next_game_state_from_action(self,game_state,action):
+        new_game_state = game_state.copy()
+        new_game_state.update(action[1],action[0])
+        return new_game_state
+
+    def get_next_game_states_from_state(self,game_state):
+        return [self.get_next_game_state_from_action(game_state,action) for action in self.get_valid_game_state_actions(game_state)]
+    
+    def solve(self):
+        goal_state_checker_function = lambda game_state: game_state.check_complete()
+        solution = Search().breadthFirstSearch(
+            start_state=self.game.game_state
+            ,goal_state_checker_function=goal_state_checker_function
+            ,next_states_function=self.get_next_game_states_from_state
+            ,track_visited=True)
+        self.game.game_state = solution
+        return solution
