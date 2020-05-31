@@ -61,9 +61,6 @@ class GameState:
             self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
             self.path_edges.append(valve[1])
 
-    def print(self):
-        print(self.board_occupancy)
-
     def list_positions(self):
         states = []
         for x in range(self.game.size[0]):
@@ -104,8 +101,14 @@ class GameState:
         comparison = self.board_occupancy == other.board_occupancy
         return comparison.all() and self.path_edges == other.path_edges
 
+    def __hash__(self):
+        return hash(hash(str(self.board_occupancy)) + 42*hash(str(self.path_edges)))
+
+    def __repr__(self):
+        return self.board_occupancy.__repr__()
+
 def generate_game(game_name):
     if game_name == 'tiny': return Game((2,4),2,[[0,(1,0)],[0,(0,3)],[1,(1,1)],[1,(1,3)]])
     if game_name == 'small': return Game((5,5),4,[[0,(3,0)],[0,(0,2)],[1,(4,0)],[1,(3,1)],[2,(2,1)],[2,(1,3)],[3,(0,3)],[3,(4,3)],[4,(3,3)],[4,(4,4)]])
     if game_name == 'medium': return Game((8,8),4,[[0,(2,0)],[0,(3,4)],[1,(3,0)],[1,(1,1)],[2,(2,1)],[2,(1,6)],[3,(2,2)],[3,(5,5)]])
-    if game_name == 'big': return Game((14,14),12,[[0,(5,1)],[0,(10,3)],[1,(3,3)],[1,(9,7)],[2,(3,5)],[2,(2,11)],[3,(5,5)],[3,(8,6)],[4,(10,5)],[4,(8,7)],[5,(1,6)],[5,(6,7)],[6,(5,6)],[6,(3,11)],[7,(6,8)],[7,(11,13)],[8,(9,9)],[8,(5,11)],[9,(1,10)],[9,(7,10)],[10,(12,13)],[10,(13,12)],[11,(12,6)],[11,(6,13)]])
+    if game_name == 'large': return Game((14,14),12,[[0,(5,1)],[0,(10,3)],[1,(3,3)],[1,(9,7)],[2,(3,5)],[2,(2,11)],[3,(5,5)],[3,(8,6)],[4,(10,5)],[4,(8,7)],[5,(1,6)],[5,(6,7)],[6,(5,6)],[6,(3,11)],[7,(6,8)],[7,(11,13)],[8,(9,9)],[8,(5,11)],[9,(1,10)],[9,(7,10)],[10,(12,13)],[10,(13,12)],[11,(12,6)],[11,(6,13)]])

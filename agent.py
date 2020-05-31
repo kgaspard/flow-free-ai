@@ -100,6 +100,7 @@ class Agent:
 
     def get_valid_game_state_actions(self,game_state):
         valid_actions = []
+        if not game_state: return valid_actions
         for i in range(len(game_state.path_edges)):
             agent_state = AgentState(game_state.path_edges[i],i)
             goal_agent_state = AgentState(game_state.game.valves[2*i+1][1],game_state.game.valves[2*i+1][0])
@@ -129,8 +130,6 @@ class Agent:
         self.game.game_state = solution
         return solution
 
-class QLearningAgent(Agent):
-    
     def play_game(self):
         next_state = self.game.game_state
         while not self.game.game_state.check_complete() and next_state:
@@ -144,3 +143,90 @@ class QLearningAgent(Agent):
         elif not next_state: result = -1
         self.game.game_state.reset()
         return result
+
+class QLearningAgent(Agent):
+
+    def __init__(self, game, alpha=0.9, epsilon=0.2, gamma=1, numTraining = 500, **args):
+        Agent.__init__(self, game, **args)
+        self.alpha = alpha
+        self.epsilon = epsilon
+        self.gamma = gamma
+        self.numTraining = numTraining
+        self.qValues = util.Counter()
+
+    def getLegalActions(self, state):
+        return self.get_valid_game_state_actions(state)
+
+    def computeValueFromQValues(self, state):
+        q_values = [self.qValues[(state,action)] for action in self.getLegalActions(state)]
+        return max(q_values) if q_values else 0
+
+    def computeActionFromQValues(self, state):
+        actions = self.getLegalActions(state)
+        if not actions: return None
+        return max(actions, key = lambda action: self.qValues[(state,action)])
+
+    def getAction(self, state):
+        legalActions = self.getLegalActions(state)
+        action = None
+        if legalActions:
+          if util.flipCoin(self.epsilon):
+            action = util.pickRandomElement(legalActions)
+          else:
+            action = self.getPolicy(state)
+        return action
+
+    def getReward(self, state, action, nextState):
+        if action == 'exit':
+            if state.check_complete():
+                return 100
+            else:
+                return -100
+        else:
+            for i in range(self.game.num_pairs):
+                if self.game.game_state.check_value_complete(i):
+                    return 10
+            return 0
+
+    def updateQValue(self, state, action, nextState):
+        current_q_value = self.qValues[(state,action)]
+        reward = self.getReward(state, action, nextState)
+        q_value_increment = reward + (self.gamma * self.computeValueFromQValues(nextState))
+        new_q_value = ((1-self.alpha)*current_q_value) + (self.alpha * q_value_increment)
+        self.qValues[(state,action)] = new_q_value
+
+    def getPolicy(self, state):
+        return self.computeActionFromQValues(state)
+
+    def getValue(self, state):
+        return self.computeValueFromQValues(state)
+
+    def play_game(self, reset_game=True):
+        state = self.game.game_state
+        next_state = self.game.game_state
+        while not self.game.game_state.check_complete() and next_state:
+            action = self.getAction(state)
+            next_state = self.get_next_game_state_from_action(state,action)
+            self.updateQValue(state, action, next_state)
+            if next_state:
+                self.game.game_state = next_state
+                state = next_state
+        result = 0
+        if self.game.game_state.check_complete(): result = 1
+        elif not next_state: result = -1
+        if reset_game: self.game.game_state.reset()
+        return result
+    
+    def learn(self):
+        counter = 0
+        while counter < self.numTraining:
+            self.play_game()
+            counter += 1
+        print(util.get_duration(self.game.start_time,'training done'))
+        return self.qValues
+
+    def adopt_policy(self):
+        epsilon_store = self.epsilon
+        self.epsilon = 0
+        self.play_game(reset_game=False)
+        self.epsilon = epsilon_store
