@@ -3,7 +3,7 @@ from agent import Agent,AgentState,QLearningAgent
 import util
 import threading
 
-game = game.generate_game('small')
+game = game.generate_game('small') # small, medium, large
 agent = Agent(game)
 qLearningAgent = QLearningAgent(game)
 
@@ -12,8 +12,6 @@ qLearningAgent = QLearningAgent(game)
 
 # agent.solve_recursively()
 # agent.solve()
-
-
 qLearningAgent.learn()
 print(qLearningAgent.adopt_policy())
 

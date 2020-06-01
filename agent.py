@@ -146,7 +146,7 @@ class Agent:
 
 class QLearningAgent(Agent):
 
-    def __init__(self, game, alpha=0.9, epsilon=0.2, gamma=1, numTraining = 500, **args):
+    def __init__(self, game, alpha=0.9, epsilon=0.2, gamma=1, numTraining = 100, **args):
         Agent.__init__(self, game, **args)
         self.alpha = alpha
         self.epsilon = epsilon
@@ -228,5 +228,6 @@ class QLearningAgent(Agent):
     def adopt_policy(self):
         epsilon_store = self.epsilon
         self.epsilon = 0
-        self.play_game(reset_game=False)
+        result = self.play_game(reset_game=False)
         self.epsilon = epsilon_store
+        return result

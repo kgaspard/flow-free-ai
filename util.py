@@ -1,3 +1,7 @@
+# Attribution Information: Some classes used in this file (PriorityQueue, Counter) were developed at UC Berkeley.
+# Thank you to Dan Klein (klein@cs.berkeley.edu) and Pieter Abbeel (pabbeel@cs.berkeley.edu) for making them 
+# publicly available through https://ai.berkeley.edu
+
 import random, heapq
 from datetime import datetime
 
