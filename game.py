@@ -55,11 +55,11 @@ class GameState:
         for valve in game.valves:
             self.board_occupancy[valve[1][0]][valve[1][1]].isValve = True
             self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
-        self.path_edges = []
+        self.paths = []
         for i in range(game.num_pairs):
             valve = game.valves[i*2]
             self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
-            self.path_edges.append(valve[1])
+            self.paths.append([valve[1]])
 
     def list_positions(self):
         states = []
@@ -69,12 +69,17 @@ class GameState:
         return states
 
     def update(self,position_tuple,value):
+        pos_value = self.board_occupancy[position_tuple[0]][position_tuple[1]].value
         if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isValve:
             self.board_occupancy[position_tuple[0]][position_tuple[1]].value = value
-        self.path_edges[value] = position_tuple
+        if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isStartValve:
+            if value==-1 and position_tuple in self.paths[pos_value]:
+                self.paths[pos_value].remove(position_tuple)
+            elif value >= 0 and position_tuple != self.paths[value][-1] and util.checkAdjacency(position_tuple,self.paths[value][-1]): 
+                self.paths[value].append(position_tuple)
     
     def check_value_complete(self, value):
-        return self.path_edges[value] == self.game.valves[value*2+1][1]
+        return self.paths[value][-1] == self.game.valves[value*2+1][1]
     
     def check_complete(self):
         complete = True
@@ -89,9 +94,10 @@ class GameState:
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
                 new_game_state.update((x,y),self.board_occupancy[x][y].value)
-        new_game_state.path_edges = []
-        for path_edge in self.path_edges:
-            new_game_state.path_edges.append(path_edge)
+        new_game_state.paths = []
+        for path in self.paths:
+            new_path = path.copy()
+            new_game_state.paths.append(new_path)
         return new_game_state
     
     def reset(self):
@@ -99,10 +105,10 @@ class GameState:
     
     def __eq__(self,other):
         comparison = self.board_occupancy == other.board_occupancy
-        return comparison.all() and self.path_edges == other.path_edges
+        return comparison.all() and self.paths == other.paths
 
     def __hash__(self):
-        return hash(hash(str(self.board_occupancy)) + 42*hash(str(self.path_edges)))
+        return hash(hash(str(self.board_occupancy)) + 42*hash(str(self.paths)))
 
     def __repr__(self):
         return self.board_occupancy.__repr__()

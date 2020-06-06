@@ -80,8 +80,6 @@ class Agent:
     def solve_recursively(self,value=0,priority_queue=None):
         solutions,priority_queue = self.solve_for_value(value=value, priority_queue=priority_queue)
         if not solutions: return solutions
-        for state in solutions[0]:
-            self.update_game_state(pos=state.pos,value = state.value)
         if value == self.game.num_pairs - 1:
             return solutions[0]
         else:
@@ -101,8 +99,8 @@ class Agent:
     def get_valid_game_state_actions(self,game_state):
         valid_actions = []
         if not game_state: return valid_actions
-        for i in range(len(game_state.path_edges)):
-            agent_state = AgentState(game_state.path_edges[i],i)
+        for i in range(len(game_state.paths)):
+            agent_state = AgentState(game_state.paths[i][-1],i)
             goal_agent_state = AgentState(game_state.game.valves[2*i+1][1],game_state.game.valves[2*i+1][0])
             if agent_state != goal_agent_state:
                 valid_actions += [(i,next_state.pos) for next_state in self.get_valid_neighbouring_agent_states(agent_state)]

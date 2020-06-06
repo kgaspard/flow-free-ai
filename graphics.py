@@ -38,13 +38,25 @@ class Graphics:
                 , tag='grid_line', width = 2, fill=color)
         return {'x_0': x_0, 'y_0': y_0, 'square_size': square_size, 'x': x, 'y': y}
     
-    def create_circle_in_grid_pos(self, x, y, color, diameter_percent = 0.8, stipple=100, **kwargs):
+    def create_circle_in_grid_pos(self, x, y, color, diameter_percent = 0.7, stipple=100, **kwargs):
         grid_obj = self.flow_grid
         x = grid_obj['x_0'] + (x+0.5)*grid_obj['square_size']
         y = grid_obj['y_0'] + (y+0.5)*grid_obj['square_size']
         r = grid_obj['square_size']*diameter_percent / 2
         stipple = '' if stipple == 100 else 'gray'+str(stipple)
         return self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=color, stipple=stipple, **kwargs)
+
+    def draw_path_line_in_grid_pos(self, x, y, direction_vector, color, diameter_percent = 0.2, **kwargs):
+        grid_obj = self.flow_grid
+        x = grid_obj['x_0'] + (x+0.5)*grid_obj['square_size']
+        y = grid_obj['y_0'] + (y+0.5)*grid_obj['square_size']
+        r = grid_obj['square_size']*diameter_percent / 2
+        # x0,y0 = x+r,y+r
+        # x1,y1 = x-r,y-r
+        dir_x, dir_y = direction_vector
+        x0,y0 = x + r - (2*r if dir_x <0 else 0), y - r + (2*r if dir_y>0 else 0)
+        x1,y1 = x-dir_x*grid_obj['square_size'] - r + (2*r if dir_x <0 else 0), y-dir_y*grid_obj['square_size'] + r - (2*r if dir_y>0 else 0)
+        return self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0, **kwargs)
 
     def init_frame(self):
         root = self.root
@@ -60,10 +72,10 @@ class Graphics:
         for valve in self.game.valves:
             self.create_circle_in_grid_pos(x=valve[1][0], y=valve[1][1], color=self.colors[valve[0]])
         print(util.get_duration(self.game.start_time,'game drawn'))
-        root.after(0,self.update_from_game_state)
+        root.after(0,self.update_from_game_state_paths)
         root.mainloop()
 
-    def update_from_game_state(self, event=None):
+    def update_from_game_state_board(self, event=None):
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
                 if not self.game.game_state.board_occupancy[x][y].isValve:
@@ -71,4 +83,16 @@ class Graphics:
                         self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[self.game.game_state.board_occupancy[x][y].value], diameter_percent = 0.3)
                     elif self.game.game_state.board_occupancy[x][y].value < 0:
                         self.create_circle_in_grid_pos(x=x, y=y, color=self.main_config['bg'], diameter_percent = 0.3)
-        self.root.after(self.main_config['update_ms'],self.update_from_game_state)
+        self.root.after(self.main_config['update_ms'],self.update_from_game_state_board)
+
+    def update_from_game_state_paths(self, event=None):
+        for i in range(self.game.num_pairs):
+            for pos_index in range(len(self.game.game_state.paths[i])):
+                if pos_index == 0: continue
+                pos = self.game.game_state.paths[i][pos_index]
+                x,y = pos
+                prev_pos = self.game.game_state.paths[i][pos_index-1]
+                direction_vector = util.tupleDiff(pos,prev_pos)
+                self.draw_path_line_in_grid_pos(x=x, y=y, direction_vector=direction_vector, color=self.colors[self.game.game_state.board_occupancy[x][y].value])
+                    
+        self.root.after(self.main_config['update_ms'],self.update_from_game_state_paths)

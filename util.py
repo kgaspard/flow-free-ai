@@ -35,6 +35,9 @@ def tupleAdd(tuple1,tuple2):
 def tupleScale(tuple1,scalar):
     return tuple(map(lambda i: i * scalar, tuple1))
 
+def tupleDiff(tuple1,tuple2):
+    return tuple(map(lambda i, j: i - j, tuple1, tuple2))
+
 def manhattanDistance(tuple1,tuple2):
     return abs(tuple1[0] - tuple2[0]) + abs(tuple1[1] - tuple2[1])
 
