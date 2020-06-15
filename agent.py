@@ -57,8 +57,7 @@ class Agent:
             if next_state==path[-2]: continue
             direction_vector = util.tupleAdd(next_state.pos,util.tupleScale(current_state.pos,-1))
             forward_tracked_positions = [util.tupleAdd(next_state.pos,direction_vector), util.tupleAdd(next_state.pos,util.tupleSwap(direction_vector)), util.tupleAdd(next_state.pos,util.tupleScale(util.tupleSwap(direction_vector),-1))]
-            forward_tracked_states = self.get_valid_neighbouring_agent_states(next_state)
-            forward_tracked_states.remove(current_state)
+            forward_tracked_states = [AgentState(forward_tracked_position,current_state.value) for forward_tracked_position in forward_tracked_positions]
             add_state = True
             for forward_tracked_state in forward_tracked_states:
                 if forward_tracked_state in path:
@@ -99,23 +98,32 @@ class Agent:
     def get_valid_game_state_actions(self,game_state):
         valid_actions = []
         if not game_state: return valid_actions
-        for i in range(len(game_state.paths)):
-            agent_state = AgentState(game_state.paths[i][-1],i)
-            goal_agent_state = AgentState(game_state.game.valves[2*i+1][1],game_state.game.valves[2*i+1][0])
-            if agent_state != goal_agent_state:
-                valid_actions += [(i,next_state.pos) for next_state in self.get_valid_neighbouring_agent_states(agent_state)]
-        if not valid_actions: valid_actions.append('exit')
+        valve_index = game_state.active_path
+        agent_path = [AgentState(pos,valve_index) for pos in game_state.paths[valve_index]]
+        agent_state = agent_path[-1]
+        goal_agent_state = AgentState(game_state.game.valves[2*valve_index+1][1],game_state.game.valves[2*valve_index+1][0])
+        if agent_state != goal_agent_state:
+            valid_actions += [(valve_index,next_state.pos) for next_state in self.get_next_states_from_path(agent_path)]
+            if not valid_actions: valid_actions.append('exit lose')
+        elif game_state.active_path < game_state.game.num_pairs - 1:
+            valid_actions.append('next color')
+        else: valid_actions.append('exit win')
         return valid_actions
     
     def get_next_game_state_from_action(self,game_state,action):
-        if action != 'exit':
+        if action == 'exit lose': pass
+        elif action == 'exit win': pass
+        elif action == 'next color':
+            game_state.active_path += 1
+            return game_state
+        else:
             new_game_state = game_state.copy()
             new_game_state.update(action[1],action[0])
             return new_game_state
 
     def get_next_game_states_from_state(self,game_state):
         actions = self.get_valid_game_state_actions(game_state)
-        if actions == ['exit']: return []
+        if actions == ['exit lose'] or actions == ['exit win']: return []
         else: return [self.get_next_game_state_from_action(game_state,action) for action in self.get_valid_game_state_actions(game_state)]
     
     def solve(self):
@@ -128,7 +136,7 @@ class Agent:
         self.game.game_state = solution
         return solution
 
-    def play_game(self):
+    def playGame(self):
         next_state = self.game.game_state
         while not self.game.game_state.check_complete() and next_state:
             next_states = self.get_next_game_states_from_state(self.game.game_state)
@@ -144,7 +152,7 @@ class Agent:
 
 class QLearningAgent(Agent):
 
-    def __init__(self, game, alpha=0.9, epsilon=0.2, gamma=1, numTraining = 100, **args):
+    def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
         Agent.__init__(self, game, **args)
         self.alpha = alpha
         self.epsilon = epsilon
@@ -175,16 +183,10 @@ class QLearningAgent(Agent):
         return action
 
     def getReward(self, state, action, nextState):
-        if action == 'exit':
-            if state.check_complete():
-                return 100
-            else:
-                return -100
-        else:
-            for i in range(self.game.num_pairs):
-                if self.game.game_state.check_value_complete(i):
-                    return 10
-            return 0
+        if action == 'exit win': return 100
+        elif action == 'exit lose': return -100
+        elif action == 'next color': return 100/state.game.num_pairs
+        else: return 0
 
     def updateQValue(self, state, action, nextState):
         current_q_value = self.qValues[(state,action)]
@@ -199,16 +201,16 @@ class QLearningAgent(Agent):
     def getValue(self, state):
         return self.computeValueFromQValues(state)
 
-    def play_game(self, reset_game=True):
-        state = self.game.game_state
-        next_state = self.game.game_state
+    def playGame(self, reset_game=True):
+        state = self.game.game_state.copy()
+        next_state = 1
         while not self.game.game_state.check_complete() and next_state:
             action = self.getAction(state)
             next_state = self.get_next_game_state_from_action(state,action)
             self.updateQValue(state, action, next_state)
             if next_state:
-                self.game.game_state = next_state
                 state = next_state
+                self.game.game_state = state
         result = 0
         if self.game.game_state.check_complete(): result = 1
         elif not next_state: result = -1
@@ -218,7 +220,7 @@ class QLearningAgent(Agent):
     def learn(self):
         counter = 0
         while counter < self.numTraining:
-            self.play_game()
+            self.playGame()
             counter += 1
         print(util.get_duration(self.game.start_time,'training done'))
         return self.qValues
@@ -226,6 +228,6 @@ class QLearningAgent(Agent):
     def adopt_policy(self):
         epsilon_store = self.epsilon
         self.epsilon = 0
-        result = self.play_game(reset_game=False)
+        result = self.playGame(reset_game=False)
         self.epsilon = epsilon_store
         return result

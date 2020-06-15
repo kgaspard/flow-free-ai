@@ -49,13 +49,15 @@ class GameState:
     def __init__( self, game):
         self.game = game
         self.board_occupancy = np.empty(shape=[game.size[0],game.size[1]], dtype = Cell)
-        # have to do this loop to ensure each instance is separate cell
         for position in self.list_positions():
             self.board_occupancy[position[0]][position[1]] = Cell()
+        # set up valves:
         for valve in game.valves:
             self.board_occupancy[valve[1][0]][valve[1][1]].isValve = True
             self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
+        # set up paths and start valves:
         self.paths = []
+        self.active_path = 0
         for i in range(game.num_pairs):
             valve = game.valves[i*2]
             self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
@@ -88,12 +90,14 @@ class GameState:
                 complete = False
                 break
         return complete
-    
+
+    ### Class attributes:    
     def copy(self):
         new_game_state = GameState(self.game)
         for x in range(self.game.size[0]):
             for y in range(self.game.size[1]):
-                new_game_state.update((x,y),self.board_occupancy[x][y].value)
+                new_game_state.board_occupancy[x][y] = Cell(value=self.board_occupancy[x][y].value, isValve=self.board_occupancy[x][y].isValve, isStartValve=self.board_occupancy[x][y].isStartValve)
+        new_game_state.active_path = self.active_path
         new_game_state.paths = []
         for path in self.paths:
             new_path = path.copy()
