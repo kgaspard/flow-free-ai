@@ -29,7 +29,7 @@ class Game:
         return valves
 
     def draw(self):
-        self.graphics.init_frame()
+        self.graphics.draw_game()
 
 class Cell:
     def __init__(self, value = -1, isValve = False, isStartValve=False):
@@ -46,22 +46,31 @@ class Cell:
     
 class GameState:
 
-    def __init__( self, game):
+    def __init__(self, game, board_occupancy=None, paths=None, active_path = 0):
         self.game = game
-        self.board_occupancy = np.empty(shape=[game.size[0],game.size[1]], dtype = Cell)
-        for position in self.list_positions():
-            self.board_occupancy[position[0]][position[1]] = Cell()
-        # set up valves:
-        for valve in game.valves:
-            self.board_occupancy[valve[1][0]][valve[1][1]].isValve = True
-            self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
-        # set up paths and start valves:
-        self.paths = []
-        self.active_path = 0
-        for i in range(game.num_pairs):
-            valve = game.valves[i*2]
-            self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
-            self.paths.append([valve[1]])
+        
+        if board_occupancy is None:
+            self.board_occupancy = np.empty(shape=[game.size[0],game.size[1]], dtype = Cell)
+            for position in self.list_positions():
+                self.board_occupancy[position[0]][position[1]] = Cell()
+            # set up valves:
+            for valve in game.valves:
+                self.board_occupancy[valve[1][0]][valve[1][1]].isValve = True
+                self.board_occupancy[valve[1][0]][valve[1][1]].value = valve[0]
+            for i in range(game.num_pairs):
+                valve = game.valves[i*2]
+                self.board_occupancy[valve[1][0]][valve[1][1]].isStartValve = True
+        else:
+            self.board_occupancy = board_occupancy
+        
+        if paths is None:
+            self.paths = []
+            for i in range(game.num_pairs):
+                valve = game.valves[i*2]
+                self.paths.append([valve[1]])
+        else: self.paths = paths
+        
+        self.active_path = active_path
 
     def list_positions(self):
         states = []
@@ -79,6 +88,33 @@ class GameState:
                 self.paths[pos_value].remove(position_tuple)
             elif value >= 0 and position_tuple != self.paths[value][-1] and util.checkAdjacency(position_tuple,self.paths[value][-1]): 
                 self.paths[value].append(position_tuple)
+
+    def update_and_copy(self, position_tuple=None,value=None, active_path = 0):
+        board_occupancy = np.empty(shape=[self.game.size[0],self.game.size[1]], dtype = Cell)
+        for x in range(self.game.size[0]):
+            for y in range(self.game.size[1]):
+                board_occupancy[x][y] = Cell(value=self.board_occupancy[x][y].value, isValve=self.board_occupancy[x][y].isValve, isStartValve=self.board_occupancy[x][y].isStartValve)
+
+        paths = []
+        for path in self.paths:
+            new_path = path.copy()
+            paths.append(new_path)
+
+        new_active_path = active_path if active_path else self.active_path 
+        
+        # update
+        if position_tuple is not None and value is not None:
+            pos_value = self.board_occupancy[position_tuple[0]][position_tuple[1]].value
+            if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isValve:
+                board_occupancy[position_tuple[0]][position_tuple[1]].value = value
+            if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isStartValve:
+                if value==-1 and position_tuple in self.paths[pos_value]:
+                    paths[pos_value].remove(position_tuple)
+                elif value >= 0 and position_tuple != self.paths[value][-1] and util.checkAdjacency(position_tuple,self.paths[value][-1]):
+                    paths[value].append(position_tuple)
+        # copy
+        new_game_state = GameState(game=self.game,board_occupancy=board_occupancy,paths=paths,active_path=new_active_path)
+        return new_game_state
     
     def check_value_complete(self, value):
         return self.paths[value][-1] == self.game.valves[value*2+1][1]
@@ -90,6 +126,9 @@ class GameState:
                 complete = False
                 break
         return complete
+
+    def draw(self):
+        self.game.graphics.draw_grame_state(game_state=self)
 
     ### Class attributes:    
     def copy(self):
@@ -112,7 +151,7 @@ class GameState:
         return comparison.all() and self.paths == other.paths
 
     def __hash__(self):
-        return hash(hash(str(self.board_occupancy)) + 42*hash(str(self.paths)))
+        return hash(hash(str(self.board_occupancy)) + 42*hash(str(self.paths))) + 37*hash(str(self.active_path))
 
     def __repr__(self):
         return self.board_occupancy.__repr__()

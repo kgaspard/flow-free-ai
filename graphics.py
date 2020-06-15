@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 import time
 import util
+import functools
 
 class Graphics:
 
@@ -71,9 +72,12 @@ class Graphics:
         # Draw initial objects (valves)
         for valve in self.game.valves:
             self.create_circle_in_grid_pos(x=valve[1][0], y=valve[1][1], color=self.colors[valve[0]])
+
+    def draw_game(self):
+        self.init_frame()
         print(util.get_duration(self.game.start_time,'game drawn'))
-        root.after(0,self.update_from_game_state_paths)
-        root.mainloop()
+        self.root.after(0,self.update_from_game_state_paths)
+        self.root.mainloop()
 
     def update_from_game_state_board(self, event=None):
         for x in range(self.game.size[0]):
@@ -85,14 +89,23 @@ class Graphics:
                         self.create_circle_in_grid_pos(x=x, y=y, color=self.main_config['bg'], diameter_percent = 0.3)
         self.root.after(self.main_config['update_ms'],self.update_from_game_state_board)
 
-    def update_from_game_state_paths(self, event=None):
+    def add_paths_to_canvas(self, game_state=None):
+        if game_state is None: game_state = self.game.game_state
         for i in range(self.game.num_pairs):
-            for pos_index in range(len(self.game.game_state.paths[i])):
+            for pos_index in range(len(game_state.paths[i])):
                 if pos_index == 0: continue
-                pos = self.game.game_state.paths[i][pos_index]
+                pos = game_state.paths[i][pos_index]
                 x,y = pos
-                prev_pos = self.game.game_state.paths[i][pos_index-1]
+                prev_pos = game_state.paths[i][pos_index-1]
                 direction_vector = util.tupleDiff(pos,prev_pos)
-                self.draw_path_line_in_grid_pos(x=x, y=y, direction_vector=direction_vector, color=self.colors[self.game.game_state.board_occupancy[x][y].value])
-                    
+                self.draw_path_line_in_grid_pos(x=x, y=y, direction_vector=direction_vector, color=self.colors[game_state.board_occupancy[x][y].value])
+
+    def draw_grame_state(self, game_state):
+        self.init_frame()
+        print(util.get_duration(self.game.start_time,'game drawn'))
+        self.add_paths_to_canvas(game_state=game_state)
+        self.root.mainloop()
+
+    def update_from_game_state_paths(self, event=None):
+        self.add_paths_to_canvas()
         self.root.after(self.main_config['update_ms'],self.update_from_game_state_paths)

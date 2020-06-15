@@ -15,38 +15,25 @@ class AgentState:
     def __eq__(self,other):
         return self.pos == other.pos and self.value == other.value
 
-class Agent:
+class AgentFunctions:
 
-    # General:
+    def __init__( self, game_state):
+        self.game_state = game_state
+        self.game = game_state.game
 
-    def __init__( self, game):
-        self.game = game
-        self.start_state = game.valves[0][1] if game.valves else None
-
-    def update_game_state(self,pos,value):
-        self.game.game_state.update(pos,value)
-    
     def get_valid_neighbouring_agent_states(self,agent_state):
         valid_neighbouring_agent_states = []
         x,y = agent_state.pos
-        if y > 0 and (self.game.game_state.board_occupancy[x][y-1].value <= -1 or (self.game.game_state.board_occupancy[x][y-1].isValve and self.game.game_state.board_occupancy[x][y-1].value == agent_state.value and not self.game.game_state.board_occupancy[x][y-1].isStartValve)):
+        if y > 0 and (self.game_state.board_occupancy[x][y-1].value <= -1 or (self.game_state.board_occupancy[x][y-1].isValve and self.game_state.board_occupancy[x][y-1].value == agent_state.value and not self.game_state.board_occupancy[x][y-1].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x,y-1),value=agent_state.value)) # North
-        if y < self.game.size[1] - 1 and (self.game.game_state.board_occupancy[x][y+1].value <= -1 or (self.game.game_state.board_occupancy[x][y+1].isValve and self.game.game_state.board_occupancy[x][y+1].value == agent_state.value and not self.game.game_state.board_occupancy[x][y+1].isStartValve)):
+        if y < self.game.size[1] - 1 and (self.game_state.board_occupancy[x][y+1].value <= -1 or (self.game_state.board_occupancy[x][y+1].isValve and self.game_state.board_occupancy[x][y+1].value == agent_state.value and not self.game_state.board_occupancy[x][y+1].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x,y+1),value=agent_state.value)) # South
-        if x > 0 and (self.game.game_state.board_occupancy[x-1][y].value <= -1 or (self.game.game_state.board_occupancy[x-1][y].isValve and self.game.game_state.board_occupancy[x-1][y].value == agent_state.value and not self.game.game_state.board_occupancy[x-1][y].isStartValve)):
+        if x > 0 and (self.game_state.board_occupancy[x-1][y].value <= -1 or (self.game_state.board_occupancy[x-1][y].isValve and self.game_state.board_occupancy[x-1][y].value == agent_state.value and not self.game_state.board_occupancy[x-1][y].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x-1,y),value=agent_state.value)) # West
-        if x < self.game.size[0] - 1 and (self.game.game_state.board_occupancy[x+1][y].value <= -1 or (self.game.game_state.board_occupancy[x+1][y].isValve and self.game.game_state.board_occupancy[x+1][y].value == agent_state.value and not self.game.game_state.board_occupancy[x+1][y].isStartValve)):
+        if x < self.game.size[0] - 1 and (self.game_state.board_occupancy[x+1][y].value <= -1 or (self.game_state.board_occupancy[x+1][y].isValve and self.game_state.board_occupancy[x+1][y].value == agent_state.value and not self.game_state.board_occupancy[x+1][y].isStartValve)):
             valid_neighbouring_agent_states.append(AgentState(pos=(x+1,y),value=agent_state.value)) # East
         return valid_neighbouring_agent_states
-    
-    # Agent State based:
 
-    def pos_path_to_state_path(self,pos_path,value):
-        state_path = []
-        for pos in pos_path:
-            state_path.append(AgentState(pos,value))
-        return state_path
-        
     def get_next_states_from_path(self,path):
         if not path: return None
         current_state = path[-1]
@@ -65,6 +52,23 @@ class Agent:
                     break
             if add_state: new_next_states.append(next_state)
         return new_next_states
+
+class SearchAgent(AgentFunctions):
+
+    def __init__( self, game):
+        game_state = game.game_state
+        AgentFunctions.__init__(self, game_state)
+        self.game = game
+
+    def update_game_state(self,pos,value):
+        self.game.game_state.update(pos,value)
+    
+    
+    def pos_path_to_state_path(self,pos_path,value):
+        state_path = []
+        for pos in pos_path:
+            state_path.append(AgentState(pos,value))
+        return state_path
 
     def solve_for_value(self,value,all_solutions=False, priority_queue=None):
         valves = [valve for valve in self.game.valves if valve[0]==value]
@@ -93,7 +97,10 @@ class Agent:
             else:
                 return next_solution
     
-    # Game State based:
+class GameStateAgent(AgentFunctions):
+
+    def __init__( self, game):
+        self.game = game
 
     def get_valid_game_state_actions(self,game_state):
         valid_actions = []
@@ -102,31 +109,34 @@ class Agent:
         agent_path = [AgentState(pos,valve_index) for pos in game_state.paths[valve_index]]
         agent_state = agent_path[-1]
         goal_agent_state = AgentState(game_state.game.valves[2*valve_index+1][1],game_state.game.valves[2*valve_index+1][0])
+        state_searcher = AgentFunctions(game_state)
         if agent_state != goal_agent_state:
-            valid_actions += [(valve_index,next_state.pos) for next_state in self.get_next_states_from_path(agent_path)]
+            valid_actions += [(valve_index,next_state.pos) for next_state in state_searcher.get_next_states_from_path(agent_path)]
             if not valid_actions: valid_actions.append('exit lose')
         elif game_state.active_path < game_state.game.num_pairs - 1:
             valid_actions.append('next color')
-        else: valid_actions.append('exit win')
+        else:
+            valid_actions.append('exit win')
         return valid_actions
     
     def get_next_game_state_from_action(self,game_state,action):
-        if action == 'exit lose': pass
-        elif action == 'exit win': pass
+        if action == 'exit lose': return None
+        elif action == 'exit win': return None
         elif action == 'next color':
-            game_state.active_path += 1
-            return game_state
+            new_active_path = game_state.active_path + 1
+            new_game_state = game_state.update_and_copy(active_path=new_active_path)
+            return new_game_state
         else:
-            new_game_state = game_state.copy()
-            new_game_state.update(action[1],action[0])
+            new_game_state = game_state.update_and_copy(position_tuple=action[1],value=action[0])
             return new_game_state
 
     def get_next_game_states_from_state(self,game_state):
         actions = self.get_valid_game_state_actions(game_state)
         if actions == ['exit lose'] or actions == ['exit win']: return []
         else: return [self.get_next_game_state_from_action(game_state,action) for action in self.get_valid_game_state_actions(game_state)]
-    
-    def solve(self):
+
+    ############# DEPRECATED - for testing only ############# 
+    def solve_with_search(self):
         goal_state_checker_function = lambda game_state: game_state.check_complete()
         solution = Search().breadthFirstSearch(
             start_state=self.game.game_state
@@ -135,25 +145,27 @@ class Agent:
             ,track_visited=True)
         self.game.game_state = solution
         return solution
+    #########################################################
 
     def playGame(self):
-        next_state = self.game.game_state
-        while not self.game.game_state.check_complete() and next_state:
-            next_states = self.get_next_game_states_from_state(self.game.game_state)
+        current_state = self.game.game_state.update_and_copy()
+        next_state = 1
+        while not current_state.check_complete() and next_state:
+            next_states = self.get_next_game_states_from_state(current_state)
             if next_states:
                 next_state = util.pickRandomElement(next_states)
-                self.game.game_state = next_state
+                current_state = next_state.update_and_copy()
             else: next_state = None
         result = 0
-        if self.game.game_state.check_complete(): result = 1
+        if current_state.check_complete(): result = 1
         elif not next_state: result = -1
-        self.game.game_state.reset()
+        # self.game.game_state.reset()
         return result
 
-class QLearningAgent(Agent):
+class QLearningAgent(GameStateAgent):
 
     def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
-        Agent.__init__(self, game, **args)
+        GameStateAgent.__init__(self, game, **args)
         self.alpha = alpha
         self.epsilon = epsilon
         self.gamma = gamma
@@ -167,11 +179,6 @@ class QLearningAgent(Agent):
         q_values = [self.qValues[(state,action)] for action in self.getLegalActions(state)]
         return max(q_values) if q_values else 0
 
-    def computeActionFromQValues(self, state):
-        actions = self.getLegalActions(state)
-        if not actions: return None
-        return max(actions, key = lambda action: self.qValues[(state,action)])
-
     def getAction(self, state):
         legalActions = self.getLegalActions(state)
         action = None
@@ -179,7 +186,7 @@ class QLearningAgent(Agent):
           if util.flipCoin(self.epsilon):
             action = util.pickRandomElement(legalActions)
           else:
-            action = self.getPolicy(state)
+            action = max(legalActions, key = lambda action: self.qValues[(state,action)])
         return action
 
     def getReward(self, state, action, nextState):
@@ -195,27 +202,21 @@ class QLearningAgent(Agent):
         new_q_value = ((1-self.alpha)*current_q_value) + (self.alpha * q_value_increment)
         self.qValues[(state,action)] = new_q_value
 
-    def getPolicy(self, state):
-        return self.computeActionFromQValues(state)
-
-    def getValue(self, state):
-        return self.computeValueFromQValues(state)
-
-    def playGame(self, reset_game=True):
-        state = self.game.game_state.copy()
+    def playGame(self, reset_game=True, draw=False):
+        state = self.game.game_state.update_and_copy()
         next_state = 1
-        while not self.game.game_state.check_complete() and next_state:
+        while next_state:
             action = self.getAction(state)
             next_state = self.get_next_game_state_from_action(state,action)
             self.updateQValue(state, action, next_state)
             if next_state:
-                state = next_state
-                self.game.game_state = state
+                state = next_state.update_and_copy()
         result = 0
-        if self.game.game_state.check_complete(): result = 1
-        elif not next_state: result = -1
-        if reset_game: self.game.game_state.reset()
-        return result
+        if state.check_complete(): result = 1
+        else: result = -1
+        if draw: state.draw()
+        # if reset_game: self.game.game_state.reset()
+        return (state,result)
     
     def learn(self):
         counter = 0
@@ -225,9 +226,10 @@ class QLearningAgent(Agent):
         print(util.get_duration(self.game.start_time,'training done'))
         return self.qValues
 
-    def adopt_policy(self):
+    def adopt_policy(self, draw=False):
         epsilon_store = self.epsilon
         self.epsilon = 0
-        result = self.playGame(reset_game=False)
+        state,result = self.playGame(reset_game=False)
         self.epsilon = epsilon_store
+        if draw: state.draw()
         return result
