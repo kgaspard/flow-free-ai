@@ -2,6 +2,7 @@ from game import Game,GameState
 import time
 import util
 from util import Search
+import featureFunctions
 
 class AgentState:
     def __init__(self,pos = (0,0), value = -1):
@@ -38,6 +39,8 @@ class AgentFunctions:
         if not path: return None
         current_state = path[-1]
         next_states = self.get_valid_neighbouring_agent_states(current_state)
+        goal_state = AgentState(pos=self.game.valves[2*current_state.value+1][1],value=current_state.value)
+        if goal_state in next_states: return [goal_state]
         if len(path) < 2: return next_states
         new_next_states = []
         for next_state in next_states:
@@ -233,3 +236,27 @@ class QLearningAgent(GameStateAgent):
         self.epsilon = epsilon_store
         if draw: state.draw()
         return result
+
+class ApproximateQLearningAgent(QLearningAgent):
+
+    def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
+        QLearningAgent.__init__(self, game=game, alpha=alpha, gamma=gamma,  numTraining = 100, **args)
+        self.weights = util.Counter()
+
+    def getFeatures(self,state,action):
+        next_state = self.get_next_game_state_from_action(state,action) if action else state
+        features = util.Counter()
+        features["number_of_turns"] = sum([featureFunctions.number_of_turns_in_path(path) for path in next_state.paths])
+        features["number_of_boxes"] = sum([len(featureFunctions.boxes_in_path(path)) for path in next_state.paths])
+        features["total_manhattan_distance_to_goal"] = sum([util.manhattanDistance(path[-1],next_state.game.valves[2*i+1][1]) for i,path in enumerate(next_state.paths)])
+        valves_in_boxes = 0
+        boxes_with_no_valves = 0
+        for i,path in enumerate(next_state.paths):
+            valves = [valve[1] for valve in next_state.game.valves if valve[0] != i]
+            for box in featureFunctions.boxes_in_path(path):
+                l = len(box.pointsInBoxRectangle(valves))
+                valves_in_boxes += l
+                if l==0: boxes_with_no_valves+=1
+        features["valves_in_boxes"] = valves_in_boxes
+        features["boxes_with_no_valves"] = boxes_with_no_valves
+        return features

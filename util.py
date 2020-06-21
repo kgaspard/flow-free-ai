@@ -4,6 +4,7 @@
 
 import random, heapq
 from datetime import datetime
+import numpy as np
 
 def random_color():
     return "#" + "%06x" % random.randint(0, 0xFFFFFF)
@@ -47,6 +48,18 @@ def pickRandomElement(input_list):
 def flipCoin( p ):
     r = random.random()
     return r < p
+
+def crossProductDirection(tuple1,tuple2):
+    a = np.array([tuple1[0],tuple1[1],0])
+    b = np.array([tuple2[0],tuple2[1],0])
+    direction = 'None'
+    if np.cross(a,b)[2] < 0: direction='Left'
+    elif np.cross(a,b)[2] > 0: direction='Right'
+    return direction
+
+def getSmallerVector(tuple1,tuple2):
+    if abs(tuple1[0])+abs(tuple1[1]) > abs(tuple2[0])+abs(tuple2[1]): return tuple2
+    else: return tuple1
 
 class PriorityQueue:
     """
