@@ -61,6 +61,16 @@ def getSmallerVector(tuple1,tuple2):
     if abs(tuple1[0])+abs(tuple1[1]) > abs(tuple2[0])+abs(tuple2[1]): return tuple2
     else: return tuple1
 
+def parseCommandLine():
+    from optparse import OptionParser
+    usageStr = "example"
+    parser = OptionParser(usageStr)
+    parser.add_option('-g', '--game', dest='game', help='the game to play', default='small')
+    parser.add_option('-n', '--numTrainings', dest='numTraining', help='how many times to run the game when learning', type='int', default=100)
+    options, rest_of_command = parser.parse_args()
+    if len(rest_of_command) != 0: raise Exception('Command line input not understood: ' + str(rest_of_command))
+    return options
+
 class PriorityQueue:
     """
       Implements a priority queue data structure. Each inserted item

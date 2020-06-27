@@ -178,8 +178,14 @@ class QLearningAgent(GameStateAgent):
     def getLegalActions(self, state):
         return self.get_valid_game_state_actions(state)
 
+    def getQValue(self, state,action):
+        return self.qValues[(state,action)]
+
+    def getQValues(self):
+        return self.qValues
+
     def computeValueFromQValues(self, state):
-        q_values = [self.qValues[(state,action)] for action in self.getLegalActions(state)]
+        q_values = [self.getQValue(state,action) for action in self.getLegalActions(state)]
         return max(q_values) if q_values else 0
 
     def getAction(self, state):
@@ -189,7 +195,7 @@ class QLearningAgent(GameStateAgent):
           if util.flipCoin(self.epsilon):
             action = util.pickRandomElement(legalActions)
           else:
-            action = max(legalActions, key = lambda action: self.qValues[(state,action)])
+            action = max(legalActions, key = lambda action: self.getQValue(state,action))
         return action
 
     def getReward(self, state, action, nextState):
@@ -199,7 +205,7 @@ class QLearningAgent(GameStateAgent):
         else: return 0
 
     def updateQValue(self, state, action, nextState):
-        current_q_value = self.qValues[(state,action)]
+        current_q_value = self.getQValue(state,action)
         reward = self.getReward(state, action, nextState)
         q_value_increment = reward + (self.gamma * self.computeValueFromQValues(nextState))
         new_q_value = ((1-self.alpha)*current_q_value) + (self.alpha * q_value_increment)
@@ -227,7 +233,7 @@ class QLearningAgent(GameStateAgent):
             self.playGame()
             counter += 1
         print(util.get_duration(self.game.start_time,'training done'))
-        return self.qValues
+        return self.getQValues()
 
     def adopt_policy(self, draw=False):
         epsilon_store = self.epsilon
@@ -240,11 +246,12 @@ class QLearningAgent(GameStateAgent):
 class ApproximateQLearningAgent(QLearningAgent):
 
     def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
-        QLearningAgent.__init__(self, game=game, alpha=alpha, gamma=gamma,  numTraining = 100, **args)
+        QLearningAgent.__init__(self, game=game, alpha=alpha, gamma=gamma,  numTraining = numTraining, **args)
         self.weights = util.Counter()
 
-    def getFeatures(self,state,action):
-        next_state = self.get_next_game_state_from_action(state,action) if action else state
+    def getFeatures(self,state,action,nextState=None):
+        next_state = nextState if nextState else self.get_next_game_state_from_action(state,action) # a feature only depends on state and action, but adding next_state as an option to not have to calculate it twice
+        if not next_state: next_state=state.update_and_copy()
         features = util.Counter()
         features["number_of_turns"] = sum([featureFunctions.number_of_turns_in_path(path) for path in next_state.paths])
         features["number_of_boxes"] = sum([len(featureFunctions.boxes_in_path(path)) for path in next_state.paths])
@@ -259,4 +266,23 @@ class ApproximateQLearningAgent(QLearningAgent):
                 if l==0: boxes_with_no_valves+=1
         features["valves_in_boxes"] = valves_in_boxes
         features["boxes_with_no_valves"] = boxes_with_no_valves
+        features.divideAll(10.0) # prevent divergence of values
         return features
+
+    def getQValue(self, state,action,features=None):
+        features = features if features else self.getFeatures(state,action) #to not have to recalculate twice
+        return features * self.weights
+
+    def getQValues(self):
+        return self.weights
+
+    def computeValueFromQValues(self, state,features=None):
+        q_values = [self.getQValue(state,action,features) for action in self.getLegalActions(state)]
+        return max(q_values) if q_values else 0
+
+    def updateQValue(self, state, action, nextState):
+        features = self.getFeatures(state=state,action=action,nextState=nextState)
+        reward = self.getReward(state, action, nextState)
+        difference = (reward + (self.gamma * self.computeValueFromQValues(state=nextState))) - self.getQValue(state,action,features)
+        for feature in features:
+            self.weights[feature] += self.alpha * difference * features[feature]
