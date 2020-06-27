@@ -65,7 +65,7 @@ def parseCommandLine():
     from optparse import OptionParser
     usageStr = "example"
     parser = OptionParser(usageStr)
-    parser.add_option('-g', '--game', dest='game', help='the game to play', default='small')
+    parser.add_option('-g', '--game', dest='game', help='the game to play. Currently tiny, small, medium, large. Can add custom games in generate_game() in game.py', default='small')
     parser.add_option('-n', '--numTrainings', dest='numTraining', help='how many times to run the game when learning', type='int', default=100)
     parser.add_option('-e', '--epsilon', dest='epsilon', help='training epsilon', type='float', default=0.4)
     options, rest_of_command = parser.parse_args()

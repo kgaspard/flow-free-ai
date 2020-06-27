@@ -10,6 +10,7 @@ This project is a <span style="color:darkred">**work in progress**</span>, and i
 
 ```python
 python solver.py
+python solver.py -h
 ```
 
 ## Contributing

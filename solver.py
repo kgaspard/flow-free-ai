@@ -31,4 +31,3 @@ learn = qLearningAgent.learn()
 print(learn)
 print(util.get_duration(game.start_time,'game solved'))
 print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
-
