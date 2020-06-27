@@ -100,7 +100,7 @@ class Graphics:
                 direction_vector = util.tupleDiff(pos,prev_pos)
                 self.draw_path_line_in_grid_pos(x=x, y=y, direction_vector=direction_vector, color=self.colors[game_state.board_occupancy[x][y].value])
 
-    def draw_grame_state(self, game_state):
+    def draw_game_state(self, game_state):
         self.init_frame()
         print(util.get_duration(self.game.start_time,'game drawn'))
         self.add_paths_to_canvas(game_state=game_state)

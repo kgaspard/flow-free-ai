@@ -1,10 +1,10 @@
-import game
+import game as Game
 from agent import SearchAgent,GameStateAgent,QLearningAgent,ApproximateQLearningAgent
 import util
 import threading
 
 options = util.parseCommandLine()
-game = game.generate_game(options.game) # tiny, small, medium, large
+game = Game.generate_game(options.game) # tiny, small, medium, large
 
 # x = threading.Thread(target=agent.solve)
 # x.start()
@@ -26,10 +26,9 @@ game = game.generate_game(options.game) # tiny, small, medium, large
 # print(qLearningAgent.adopt_policy(draw=True))
 
 ## Approximate qAgent:
-qLearningAgent = ApproximateQLearningAgent(game,numTraining=options.numTraining)
-state,result = qLearningAgent.playGame(reset_game=False, draw=False)
+qLearningAgent = ApproximateQLearningAgent(game,numTraining=options.numTraining,epsilon=options.epsilon)
 learn = qLearningAgent.learn()
 print(learn)
 print(util.get_duration(game.start_time,'game solved'))
-print(qLearningAgent.adopt_policy(draw=True))
+print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
 

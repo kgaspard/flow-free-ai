@@ -45,7 +45,7 @@ class AgentFunctions:
         new_next_states = []
         for next_state in next_states:
             if next_state==path[-2]: continue
-            direction_vector = util.tupleAdd(next_state.pos,util.tupleScale(current_state.pos,-1))
+            direction_vector = util.tupleDiff(next_state.pos,current_state.pos)
             forward_tracked_positions = [util.tupleAdd(next_state.pos,direction_vector), util.tupleAdd(next_state.pos,util.tupleSwap(direction_vector)), util.tupleAdd(next_state.pos,util.tupleScale(util.tupleSwap(direction_vector),-1))]
             forward_tracked_states = [AgentState(forward_tracked_position,current_state.value) for forward_tracked_position in forward_tracked_positions]
             add_state = True
@@ -211,13 +211,16 @@ class QLearningAgent(GameStateAgent):
         new_q_value = ((1-self.alpha)*current_q_value) + (self.alpha * q_value_increment)
         self.qValues[(state,action)] = new_q_value
 
-    def playGame(self, reset_game=True, draw=False):
-        state = self.game.game_state.update_and_copy()
+    def playGame(self, reset_game=True, draw=False, trackReward=False, game=None):
+        game = game if game else self.game
+        state = game.game_state.update_and_copy()
         next_state = 1
+        reward = 0
         while next_state:
             action = self.getAction(state)
             next_state = self.get_next_game_state_from_action(state,action)
             self.updateQValue(state, action, next_state)
+            if trackReward: reward += self.getReward(state, action, next_state)
             if next_state:
                 state = next_state.update_and_copy()
         result = 0
@@ -235,10 +238,11 @@ class QLearningAgent(GameStateAgent):
         print(util.get_duration(self.game.start_time,'training done'))
         return self.getQValues()
 
-    def adopt_policy(self, draw=False):
+    def adopt_policy(self, draw=False, game=None):
+        game = game if game else self.game
         epsilon_store = self.epsilon
         self.epsilon = 0
-        state,result = self.playGame(reset_game=False)
+        state,result = self.playGame(reset_game=False, game=game)
         self.epsilon = epsilon_store
         if draw: state.draw()
         return result
@@ -246,7 +250,7 @@ class QLearningAgent(GameStateAgent):
 class ApproximateQLearningAgent(QLearningAgent):
 
     def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
-        QLearningAgent.__init__(self, game=game, alpha=alpha, gamma=gamma,  numTraining = numTraining, **args)
+        QLearningAgent.__init__(self, game=game, alpha=alpha, epsilon=epsilon, gamma=gamma,  numTraining = numTraining, **args)
         self.weights = util.Counter()
 
     def getFeatures(self,state,action,nextState=None):
@@ -266,6 +270,7 @@ class ApproximateQLearningAgent(QLearningAgent):
                 if l==0: boxes_with_no_valves+=1
         features["valves_in_boxes"] = valves_in_boxes
         features["boxes_with_no_valves"] = boxes_with_no_valves
+        features["is_wall_hug"] = featureFunctions.is_wall_hug(state,next_state)
         features.divideAll(10.0) # prevent divergence of values
         return features
 

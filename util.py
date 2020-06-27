@@ -67,6 +67,7 @@ def parseCommandLine():
     parser = OptionParser(usageStr)
     parser.add_option('-g', '--game', dest='game', help='the game to play', default='small')
     parser.add_option('-n', '--numTrainings', dest='numTraining', help='how many times to run the game when learning', type='int', default=100)
+    parser.add_option('-e', '--epsilon', dest='epsilon', help='training epsilon', type='float', default=0.4)
     options, rest_of_command = parser.parse_args()
     if len(rest_of_command) != 0: raise Exception('Command line input not understood: ' + str(rest_of_command))
     return options

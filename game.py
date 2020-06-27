@@ -79,6 +79,11 @@ class GameState:
                 states.append((x,y))
         return states
 
+    def get_position_value(self,pos):
+        if pos[0] >= 0 and pos[0] < self.game.size[0] and pos[1] >= 0 and pos[1] < self.game.size[1]:
+            return self.board_occupancy[pos[0]][pos[1]].value
+        else: return None
+
     def update(self,position_tuple,value):
         pos_value = self.board_occupancy[position_tuple[0]][position_tuple[1]].value
         if not self.board_occupancy[position_tuple[0]][position_tuple[1]].isValve:
@@ -128,7 +133,7 @@ class GameState:
         return complete
 
     def draw(self):
-        self.game.graphics.draw_grame_state(game_state=self)
+        self.game.graphics.draw_game_state(game_state=self)
 
     ### Class attributes:    
     def copy(self):

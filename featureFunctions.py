@@ -73,21 +73,33 @@ def boxes_in_path(path):
   return boxes
 
 ### If we want to track boxes as we go along:
-# def boxes_in_path(path):
-#   n = len(path)
-#   turns = []
-#   if n >= 1: turns.append((path[0],'Start'))
-#   if n>2:
-#     direction='-'
-#     box_counter = 0
-#     for i in range(n-2):
-#       if util.tupleDiff(path[i+2],path[i+1]) != util.tupleDiff(path[i+1],path[i]):
-#         new_direction = util.crossProductDirection(util.tupleDiff(path[i+1],path[i]),util.tupleDiff(path[i+2],path[i+1]))
-#         turns.append((path[i+1],new_direction))
-#         # 2 left turns or 2 right turns is a box
-#         if new_direction == direction:
-#           box_counter+=1
-#         direction = new_direction
-#     print(box_counter)
-#   if n>=2: turns.append((path[-1],'End'))
-#   return turns
+def boxes_in_path_tracked(path):
+  n = len(path)
+  turns = []
+  if n >= 1: turns.append((path[0],'Start'))
+  if n>2:
+    direction='-'
+    box_counter = 0
+    for i in range(n-2):
+      if util.tupleDiff(path[i+2],path[i+1]) != util.tupleDiff(path[i+1],path[i]):
+        new_direction = util.crossProductDirection(util.tupleDiff(path[i+1],path[i]),util.tupleDiff(path[i+2],path[i+1]))
+        turns.append((path[i+1],new_direction))
+        # 2 left turns or 2 right turns is a box
+        if new_direction == direction:
+          box_counter+=1
+        direction = new_direction
+    print(box_counter)
+  if n>=2: turns.append((path[-1],'End'))
+  return turns
+
+def is_wall_hug(state,next_state):
+  path = next_state.paths[next_state.active_path]
+  if state.active_path != next_state.active_path or len(path)<2: return 0
+  direction_vector = util.tupleDiff(path[-1],path[-2])
+  side_positions = [util.tupleAdd(path[-1],util.tupleSwap(direction_vector)), util.tupleAdd(path[-1],util.tupleScale(util.tupleSwap(direction_vector),-1))]
+  is_wall_hug = 1
+  for side_position in side_positions:
+    if next_state.get_position_value(side_position) != -1: is_wall_hug = -1
+    break
+  return is_wall_hug
+            
