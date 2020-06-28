@@ -132,6 +132,13 @@ class GameState:
                 break
         return complete
 
+    def get_numeric_array(self,max_size=15):
+        state_array = [-1]*max_size*max_size
+        for i in range(max_size*max_size):
+            y,x = divmod(i,max_size)
+            if x<self.game.size[0] and y<self.game.size[1]: state_array[i] = self.board_occupancy[x][y].value
+        return state_array
+
     def draw(self):
         self.game.graphics.draw_game_state(game_state=self)
 

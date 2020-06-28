@@ -2,6 +2,7 @@ import game as Game
 from agent import SearchAgent,GameStateAgent,QLearningAgent,ApproximateQLearningAgent
 import util
 import threading
+import dataParser
 
 options = util.parseCommandLine()
 game = Game.generate_game(options.game) # tiny, small, medium, large
@@ -26,8 +27,12 @@ game = Game.generate_game(options.game) # tiny, small, medium, large
 # print(qLearningAgent.adopt_policy(draw=True))
 
 ## Approximate qAgent:
-qLearningAgent = ApproximateQLearningAgent(game,numTraining=options.numTraining,epsilon=options.epsilon)
-learn = qLearningAgent.learn()
-print(learn)
-print(util.get_duration(game.start_time,'game solved'))
-print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
+# qLearningAgent = ApproximateQLearningAgent(game,numTraining=options.numTraining,epsilon=options.epsilon)
+# learn = qLearningAgent.learn()
+# print(learn)
+# print(util.get_duration(game.start_time,'game solved'))
+# print(qLearningAgent.adopt_policy(draw=True, game=game))
+# print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
+
+new_game = Game.init_from_data(dataParser.level)
+# new_game.draw()

@@ -97,9 +97,9 @@ def is_wall_hug(state,next_state):
   if state.active_path != next_state.active_path or len(path)<2: return 0
   direction_vector = util.tupleDiff(path[-1],path[-2])
   side_positions = [util.tupleAdd(path[-1],util.tupleSwap(direction_vector)), util.tupleAdd(path[-1],util.tupleScale(util.tupleSwap(direction_vector),-1))]
-  is_wall_hug = 1
+  is_wall_hug = -1
   for side_position in side_positions:
-    if next_state.get_position_value(side_position) != -1: is_wall_hug = -1
+    if next_state.get_position_value(side_position) != -1: is_wall_hug = 1
     break
   return is_wall_hug
             
