@@ -34,5 +34,5 @@ game = Game.generate_game(options.game) # tiny, small, medium, large
 # print(qLearningAgent.adopt_policy(draw=True, game=game))
 # print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
 
-new_game = Game.init_from_data(dataParser.level)
-# new_game.draw()
+new_game = dataParser.test_game()
+new_game.draw()
