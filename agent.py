@@ -167,7 +167,7 @@ class GameStateAgent(AgentFunctions):
 
 class QLearningAgent(GameStateAgent):
 
-    def __init__(self, game, alpha=0.9, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
+    def __init__(self, game, alpha=0.1, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
         GameStateAgent.__init__(self, game, **args)
         self.alpha = alpha
         self.epsilon = epsilon
@@ -232,10 +232,12 @@ class QLearningAgent(GameStateAgent):
     
     def learn(self):
         counter = 0
+        win_counter = 0
         while counter < self.numTraining:
-            self.playGame()
+            end_state,game_result = self.playGame()
+            win_counter += game_result if game_result == 1 else 0
             counter += 1
-        print(util.get_duration(self.game.start_time,'training done'))
+        print(util.get_duration(self.game.start_time,'training done - won '+str(100*win_counter/counter)+'% of games'))
         return self.getQValues()
 
     def adopt_policy(self, draw=False, game=None):

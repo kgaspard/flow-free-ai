@@ -1,38 +1,40 @@
 import game as Game
 from agent import SearchAgent,GameStateAgent,QLearningAgent,ApproximateQLearningAgent
 import util
-import threading
 import dataParser
 
-options = util.parseCommandLine()
-game = Game.generate_game(options.game) # tiny, small, medium, large
+def search_based(options):
+  agent = SearchAgent(options.game)
+  agent.solve_recursively()
+  print(util.get_duration(options.game.start_time,'game solved'))
+  options.game.draw()
 
-# x = threading.Thread(target=agent.solve)
-# x.start()
+def exactQ(options):
+  qLearningAgent = QLearningAgent(options.game,numTraining=options.numTraining)
+  state,result = qLearningAgent.playGame(reset_game=False, draw=False)
+  learn = qLearningAgent.learn()
+  print(util.get_duration(options.game.start_time,'game solved'))
+  print(qLearningAgent.adopt_policy(draw=True))
 
-#### Search-based solving:
-# agent = SearchAgent(game)
-# agent.solve_recursively()
-# print(util.get_duration(game.start_time,'game solved'))
-# game.draw()
+def approxQ(options):
+  qLearningAgent = ApproximateQLearningAgent(options.game,numTraining=options.numTraining,epsilon=options.epsilon)
+  learn = qLearningAgent.learn()
+  print(learn)
+  print(util.get_duration(options.game.start_time,'game solved'))
+  print(qLearningAgent.adopt_policy(draw=True, game=options.game))
 
-### Reinforcement learning-based solving:
+def cnn(options):
+  new_game = dataParser.test_game()
+  new_game.draw()
 
-## Exact qAgent:
-# qLearningAgent = QLearningAgent(game,numTraining=options.numTraining)
-# state,result = qLearningAgent.playGame(reset_game=False, draw=False)
-# print(result)
-# learn = qLearningAgent.learn()
-# print(util.get_duration(game.start_time,'game solved'))
-# print(qLearningAgent.adopt_policy(draw=True))
+def main():
+  options = util.parseCommandLine()
+  options.game = Game.generate_game(options.game) # tiny, small, medium, large
+  if options.algorithm=='search': search_based(options)
+  elif options.algorithm == 'exactQ': exactQ(options)
+  elif options.algorithm == 'approxQ': approxQ(options)
+  elif options.algorithm == 'cnn': cnn(options)
+  else: print('invalid algorithm')
 
-## Approximate qAgent:
-# qLearningAgent = ApproximateQLearningAgent(game,numTraining=options.numTraining,epsilon=options.epsilon)
-# learn = qLearningAgent.learn()
-# print(learn)
-# print(util.get_duration(game.start_time,'game solved'))
-# print(qLearningAgent.adopt_policy(draw=True, game=game))
-# print(qLearningAgent.adopt_policy(draw=True, game=Game.generate_game('large')))
-
-new_game = dataParser.test_game()
-new_game.draw()
+if __name__ == "__main__":
+  main()

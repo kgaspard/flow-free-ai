@@ -61,13 +61,24 @@ def getSmallerVector(tuple1,tuple2):
     if abs(tuple1[0])+abs(tuple1[1]) > abs(tuple2[0])+abs(tuple2[1]): return tuple2
     else: return tuple1
 
+def normalize_array(array,max_val):
+    array = (array+1)/(max_val+1) # add 1 to account for empty cells being represented by -1, not 0
+    array -= .5
+    return array
+
+def denormalize_array(array,max_val):
+    array += .5
+    array = (array*(max_val+1))-1
+    return array
+
 def parseCommandLine():
     from optparse import OptionParser
-    usageStr = "example"
+    usageStr = "Solve from a sample of Flow Free boards using different algorithms"
     parser = OptionParser(usageStr)
+    parser.add_option('-a', '--algo', dest='algorithm', help='The algorithm used to solve the game. Choose from search, exactQ, approxQ, or cnn', default='search')
     parser.add_option('-g', '--game', dest='game', help='the game to play. Currently tiny, small, medium, large. Can add custom games in generate_game() in game.py', default='small')
-    parser.add_option('-n', '--numTrainings', dest='numTraining', help='how many times to run the game when learning', type='int', default=100)
-    parser.add_option('-e', '--epsilon', dest='epsilon', help='training epsilon', type='float', default=0.4)
+    parser.add_option('-n', '--numTrainings', dest='numTraining', help='how many times to run the game when learning (iterations for Q Learning, epochs for cnn)', type='int', default=100)
+    parser.add_option('-e', '--epsilon', dest='epsilon', help='training epsilon (QLearning)', type='float', default=0.4)
     options, rest_of_command = parser.parse_args()
     if len(rest_of_command) != 0: raise Exception('Command line input not understood: ' + str(rest_of_command))
     return options
