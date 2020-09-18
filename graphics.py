@@ -3,6 +3,7 @@ import random
 import time
 import util
 import functools
+import numpy as np
 
 class Graphics:
 
@@ -69,7 +70,7 @@ class Graphics:
         root.geometry(str(config['width'] or 800)+'x'+str(config['height'] or 600))
         root.configure(bg=config['bg'] or 'black')
 
-        # Draw initial objects (valves)
+    def draw_valves(self):
         for valve in self.game.valves:
             self.create_circle_in_grid_pos(x=valve[1][0], y=valve[1][1], color=self.colors[valve[0]])
 
@@ -102,10 +103,26 @@ class Graphics:
 
     def draw_game_state(self, game_state):
         self.init_frame()
-        print(util.get_duration(self.game.start_time,'game drawn'))
+        self.draw_valves()
         self.add_paths_to_canvas(game_state=game_state)
+        print(util.get_duration(self.game.start_time,'game drawn'))
         self.root.mainloop()
 
     def update_from_game_state_paths(self, event=None):
+        self.draw_valves()
         self.add_paths_to_canvas()
         self.root.after(self.main_config['update_ms'],self.update_from_game_state_paths)
+
+    # For CNN Solutions:
+
+    def draw_points(self,array):
+        for x,y in np.ndindex(array.shape):
+            if array[x,y]>-1:
+                self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[array[x,y]], diameter_percent = 0.3)
+
+
+    def draw_game_from_2d_array(self,array):
+        self.init_frame()
+        self.draw_points(array)
+        print(util.get_duration(self.game.start_time,'game drawn'))
+        self.root.mainloop()

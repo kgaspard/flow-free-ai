@@ -88,10 +88,14 @@ def solution_to_array(solution, max_board_size=25):
 
     return board.flatten()
 
+def draw_game_from_2d_array(array):
+    game = Game(array.shape,np.max(array)+1,[])
+    game.draw_from_2d_array(array)
+
 ##### Parse files
 
-def parse_files(max_board_size=15):
-    files = os.listdir('./data')
+def parse_files(max_board_size=15,file_list=[]):
+    files = file_list if file_list else os.listdir('./data')
     problems = []
     solutions = []
     for f in files:

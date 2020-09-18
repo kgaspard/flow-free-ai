@@ -69,7 +69,7 @@ def normalize_array(array,max_val):
 def denormalize_array(array,max_val):
     array += .5
     array = (array*(max_val+1))-1
-    return array
+    return np.rint(array).astype(int)
 
 def parseCommandLine():
     from optparse import OptionParser
