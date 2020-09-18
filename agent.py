@@ -167,7 +167,7 @@ class GameStateAgent(AgentFunctions):
 
 class QLearningAgent(GameStateAgent):
 
-    def __init__(self, game, alpha=0.1, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
+    def __init__(self, game, alpha=0.5, epsilon=0.4, gamma=0.99, numTraining = 100, **args):
         GameStateAgent.__init__(self, game, **args)
         self.alpha = alpha
         self.epsilon = epsilon

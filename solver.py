@@ -10,7 +10,7 @@ def search_based(options):
   options.game.draw()
 
 def exactQ(options):
-  qLearningAgent = QLearningAgent(options.game,numTraining=options.numTraining)
+  qLearningAgent = QLearningAgent(options.game,numTraining=options.numTraining,alpha=options.alpha)
   state,result = qLearningAgent.playGame(reset_game=False, draw=False)
   learn = qLearningAgent.learn()
   print(util.get_duration(options.game.start_time,'game solved'))
