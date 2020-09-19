@@ -115,14 +115,16 @@ class Graphics:
 
     # For CNN Solutions:
 
-    def draw_points(self,array):
-        for x,y in np.ndindex(array.shape):
-            if array[x,y]>-1:
-                self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[array[x,y]], diameter_percent = 0.3)
+    def draw_points(self,start_index,problem_array,solution_array):
+        for x,y in np.ndindex(solution_array.shape):
+            if solution_array[x,y]>(start_index-1):
+                self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[solution_array[x,y]-start_index], diameter_percent = 0.3)
+        for x,y in np.ndindex(problem_array.shape):
+            if problem_array[x,y]>(start_index-1):
+                self.create_circle_in_grid_pos(x=x, y=y, color=self.colors[problem_array[x,y]-start_index], diameter_percent = 0.7)
 
-
-    def draw_game_from_2d_array(self,array):
+    def draw_game_from_2d_array(self,start_index,problem_array,solution_array):
         self.init_frame()
-        self.draw_points(array)
+        self.draw_points(start_index,problem_array,solution_array)
         print(util.get_duration(self.game.start_time,'game drawn'))
         self.root.mainloop()

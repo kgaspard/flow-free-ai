@@ -31,8 +31,8 @@ class Game:
     def draw(self):
         self.graphics.draw_game()
 
-    def draw_from_2d_array(self,array):
-        self.graphics.draw_game_from_2d_array(array)
+    def draw_from_2d_array(self,start_index,problem_array,solution_array):
+        self.graphics.draw_game_from_2d_array(start_index,problem_array,solution_array)
 
 class Cell:
     def __init__(self, value = -1, isValve = False, isStartValve=False):

@@ -64,14 +64,14 @@ def getSmallerVector(tuple1,tuple2):
 
 def normalize_array(array,max_val):
     array_copy = copy.copy(array)
-    array_copy = (array_copy+1)/(max_val+1) # add 1 to account for empty cells being represented by -1, not 0
+    array_copy = array_copy/max_val # add 1 to account for empty cells being represented by -1, not 0
     array_copy -= .5
     return array_copy
 
 def denormalize_array(array,max_val):
     array_copy = copy.copy(array)
     array_copy += .5
-    array_copy = (array_copy*(max_val+1))-1
+    array_copy = array_copy*max_val
     return np.rint(array_copy).astype(int)
 
 def parseCommandLine():

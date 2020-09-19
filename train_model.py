@@ -13,11 +13,10 @@ def process_data_for_training(max_board_size=15,file_list=[]):
     labels=[]
     
     features = np.array(problems).reshape(len(problems),max_board_size,max_board_size,1)
-    max_val = np.max(problems)  # note this is the max-value in 0-indexed colours, so will have to add 1 to get max_number_of_colours
+    max_val = np.max(problems)  # note we are using 1-indexed colours here
     features = normalize_array(features,max_val)
 
     labels = np.array(solutions).reshape(len(solutions),max_board_size*max_board_size,1)
-    labels += 1 # add 1 to account for empty cells being represented by -1, not 0
 
     del(problems)
     del(solutions)
@@ -46,7 +45,7 @@ def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[])
 
     x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list)
 
-    model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val+1)
+    model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val)
 
     adam = keras.optimizers.Adam(lr=.001)
     model.compile(loss='sparse_categorical_crossentropy', optimizer=adam)
@@ -62,8 +61,8 @@ def solve_game_sequentially(game_array,max_board_size=15, max_number_of_colours=
         out = model.predict(sample.reshape((1,max_board_size,max_board_size,1)))
         out = out.squeeze()
 
-        pred = np.argmax(out, axis=1).reshape((max_board_size,max_board_size))+1 
-        prob = np.around(np.max(out, axis=1).reshape((max_board_size,max_board_size)), 2) 
+        pred = np.argmax(out, axis=1).reshape((max_board_size,max_board_size))
+        prob = np.around(np.max(out, axis=1).reshape((max_board_size,max_board_size)), 3) 
         
         sample = denormalize_array(sample,max_number_of_colours).reshape((max_board_size,max_board_size))
         mask = (sample==0)
@@ -80,22 +79,20 @@ def solve_game_sequentially(game_array,max_board_size=15, max_number_of_colours=
         sample[x][y] = val
         sample = normalize_array(sample,max_number_of_colours)
 
-    pred = pred-1   # to bring back to 0-index colours like feats
-    return pred
+    return sample
 
 def solve_game_by_square(game_array,max_board_size=15, max_number_of_colours=15, model_path='model_1'):
     model = keras.models.load_model(model_path)
-    original_game_array = denormalize_array(game_array,max_number_of_colours-1).reshape(max_board_size,max_board_size)
+    original_game_array = denormalize_array(game_array,max_number_of_colours).reshape(max_board_size,max_board_size)
     
     pred_distribution = model.predict(game_array.reshape((1,max_board_size,max_board_size,1)))
     pred_distribution = pred_distribution.squeeze().reshape(max_board_size,max_board_size,pred_distribution.shape[2])
     predicted_values = np.argmax(pred_distribution,axis=2)
 
     # don't predict valves
-    is_valve = (original_game_array > -1).astype(int)
-    prediction = is_valve*(original_game_array+1) + predicted_values*(1-is_valve)
+    is_valve = (original_game_array > 0).astype(int)
+    prediction = is_valve*original_game_array + predicted_values*(1-is_valve)
     
-    prediction = prediction-1   # to bring back to 0-index colours like feats
     print(original_game_array)
     print(prediction)
     return prediction
@@ -106,7 +103,6 @@ def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_co
         
         pred = solve_game_sequentially(game_array=feat,max_board_size=max_board_size, max_number_of_colours=max_number_of_colours,model_path=model_path)
         true = labels[i].reshape((max_board_size,max_board_size))
-        
         if(abs(true - pred).sum()==0):
             correct += 1
         
@@ -114,13 +110,16 @@ def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_co
 
 gpu.limit_gpu()
 
-model_path = 'models\model_five_2'
-# train_model(epochs=5000,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
+model_path = 'models\model_five_3'
+# train_model(epochs=1000,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
 x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=5,file_list=['five.txt','afive.txt'])
-# game_array = solve_game_sequentially(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
-game_array = solve_game_by_square(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
+# game_array = solve_game_sequentially(x_test[0],max_board_size=5,max_number_of_colours=max_val,model_path=model_path)
+# denorm = denormalize_array(x_test[0].squeeze(),max_val)
+# print(denorm)
+# print(y_test[0].reshape(5,5))
+# print(game_array.squeeze())
+# game_array = solve_game_by_square(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
 
-# draw_game_from_2d_array(denorm)
 
-# acc = test_accuracy(x_test,y_test,model_path,max_board_size=5,max_number_of_colours=max_val+1)
-# print(acc)
+acc = test_accuracy(x_train[:10],y_train[:10],model_path,max_board_size=5,max_number_of_colours=max_val)
+print(acc)
