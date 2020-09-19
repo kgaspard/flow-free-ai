@@ -5,6 +5,7 @@
 import random, heapq
 from datetime import datetime
 import numpy as np
+import copy
 
 def random_color():
     return "#" + "%06x" % random.randint(0, 0xFFFFFF)
@@ -62,14 +63,16 @@ def getSmallerVector(tuple1,tuple2):
     else: return tuple1
 
 def normalize_array(array,max_val):
-    array = (array+1)/(max_val+1) # add 1 to account for empty cells being represented by -1, not 0
-    array -= .5
-    return array
+    array_copy = copy.copy(array)
+    array_copy = (array_copy+1)/(max_val+1) # add 1 to account for empty cells being represented by -1, not 0
+    array_copy -= .5
+    return array_copy
 
 def denormalize_array(array,max_val):
-    array += .5
-    array = (array*(max_val+1))-1
-    return np.rint(array).astype(int)
+    array_copy = copy.copy(array)
+    array_copy += .5
+    array_copy = (array_copy*(max_val+1))-1
+    return np.rint(array_copy).astype(int)
 
 def parseCommandLine():
     from optparse import OptionParser

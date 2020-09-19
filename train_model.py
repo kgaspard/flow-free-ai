@@ -83,6 +83,23 @@ def solve_game_sequentially(game_array,max_board_size=15, max_number_of_colours=
     pred = pred-1   # to bring back to 0-index colours like feats
     return pred
 
+def solve_game_by_square(game_array,max_board_size=15, max_number_of_colours=15, model_path='model_1'):
+    model = keras.models.load_model(model_path)
+    original_game_array = denormalize_array(game_array,max_number_of_colours-1).reshape(max_board_size,max_board_size)
+    
+    pred_distribution = model.predict(game_array.reshape((1,max_board_size,max_board_size,1)))
+    pred_distribution = pred_distribution.squeeze().reshape(max_board_size,max_board_size,pred_distribution.shape[2])
+    predicted_values = np.argmax(pred_distribution,axis=2)
+
+    # don't predict valves
+    is_valve = (original_game_array > -1).astype(int)
+    prediction = is_valve*(original_game_array+1) + predicted_values*(1-is_valve)
+    
+    prediction = prediction-1   # to bring back to 0-index colours like feats
+    print(original_game_array)
+    print(prediction)
+    return prediction
+
 def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_colours=15):
     correct = 0
     for i,feat in enumerate(feats):
@@ -96,11 +113,14 @@ def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_co
     return correct/feats.shape[0]
 
 gpu.limit_gpu()
+
 model_path = 'models\model_five_2'
 # train_model(epochs=5000,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
 x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=5,file_list=['five.txt','afive.txt'])
 # game_array = solve_game_sequentially(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
-# denorm = denormalize_array(x_test[0],max_val).reshape(5,5)
+game_array = solve_game_by_square(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
+
 # draw_game_from_2d_array(denorm)
-acc = test_accuracy(x_test,y_test,model_path,max_board_size=5,max_number_of_colours=max_val+1)
-print(acc)
+
+# acc = test_accuracy(x_test,y_test,model_path,max_board_size=5,max_number_of_colours=max_val+1)
+# print(acc)
