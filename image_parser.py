@@ -12,8 +12,11 @@ x_pixel_for_line_detection = 10
 
 def url_to_array(url):
   try:
-    r = requests.get(url, headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'})
-    im = Image.open(BytesIO(r.content))
+    if url.startswith('http'):
+      r = requests.get(url, headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'})
+      im = Image.open(BytesIO(r.content))
+    else:
+        im = Image.open(url)
     return np.array(im)
   except Exception as e:
     print('invalid image at '+url)
@@ -118,23 +121,43 @@ def url_list_generator(packs):
       url_list.append(string)
   return url_list
 
-def test_parser(url):
-  img = url_to_array(url)
-  y_pixel_for_line_detection = get_y_pixel_for_line_detection(img,x_pixel_for_line_detection)
-  grid_x = get_line_peaks(img[y_pixel_for_line_detection])
-  grid_y = get_line_peaks(img[:,x_pixel_for_line_detection])
-  problem,solution = generate_problem_and_solution_from_image(img)
-  print(problem)
-  print(solution)
+def local_file_list_generator(path):
+  files = os.listdir(path)
+  return [path+f for f in files]
 
+def string_to_matrices(string, max_board_size=25):
+
+  def string_to_matrix(string,size_x,size_y):
+    array = np.array([int(elem) for elem in string.split(',')])
+    array = array.reshape(size_x,size_y)
+    array = np.pad(array,((0,max_board_size-size_x),(0,max_board_size-size_y)))
+    return array
+
+  size_split = string.split(':')
+  board_size = size_split.pop(0).split('x')
+  size_x,size_y = int(board_size[0]),int(board_size[1])
+  problem,solution = size_split[0].split('=')
+  problem,solution = string_to_matrix(problem,size_x,size_y),string_to_matrix(solution,size_x,size_y)
+  return problem,solution
+
+##### Parse files
+
+def parse_saved_files(max_board_size=25,file_list=[]):
+  problems = []
+  solutions = []
+  for f in file_list:
+      levels = open(f, "r").read().splitlines()
+      for level in levels:
+        problem,solution = string_to_matrices(level,max_board_size=max_board_size)
+  return problems,solutions
 
 def main():
   packs = [('regular',150),('bonus',150),('green',20)]
-  packs_five = [('regular',1,30),('bonus',1,30),('blue',1,30),('green',1,30),('intro',1,8)]
+  packs_five = [('regular',1,30),('bonus',1,30),('blue',1,30),('green',1,30),('intro',1,8),('kids',1,60)]
   url_list = url_list_generator(packs_five)
+  url_list = local_file_list_generator('data/images/')
+  
   export_to_file(url_list)
 
 if __name__ == "__main__":
   main()
-  # url = 'https://flowfreesolutions.com/solution-pictures/flow/intro/flow-intro-5.png'
-  # test_parser(url)

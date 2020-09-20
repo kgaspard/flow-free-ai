@@ -31,7 +31,7 @@ def init_game_from_level(level):
     
     return Game(board_size,num_valve_pairs,valves)
 
-def problem_to_array(problem, max_board_size=25):
+def problem_to_matrix(problem, max_board_size=25):
     problem_array = problem.split(';')
     board_size_string = problem_array.pop(0)
     board = np.full((max_board_size, max_board_size), 0)
@@ -42,7 +42,7 @@ def problem_to_array(problem, max_board_size=25):
         x,y = (int(pos_array[0])-1,int(pos_array[1])-1)
         board[x][y] = valve_index
         if index % 2 == 1: valve_index += 1
-    return board.flatten()
+    return board
 
 def level_array_to_game(array):
     max_board_size = int(np.sqrt(len(array)))
@@ -76,7 +76,7 @@ def game_solution_from_level(level):
 
     return state.update_and_copy()
 
-def solution_to_array(solution, max_board_size=25):
+def solution_to_matrix(solution, max_board_size=25):
     solution_array = [elem.split(';') for elem in solution.split('|')]
     board = np.full((max_board_size, max_board_size), 0)
     
@@ -87,7 +87,7 @@ def solution_to_array(solution, max_board_size=25):
             x,y = (int(pos_array[0])-1,int(pos_array[1])-1)
             board[x][y] = one_indexed_path
 
-    return board.flatten()
+    return board
 
 def draw_game_from_2d_array(start_index=1,problem_array=np.empty(0),solution_array=np.empty(0)):
     game = Game(problem_array.shape,np.max(problem_array)+(1-start_index),[])
@@ -103,6 +103,6 @@ def parse_files(max_board_size=15,file_list=[]):
         levels = open("./data/"+f, "r").read().splitlines()
         for level in levels:
             problem,solution = level.split('=')
-            problems.append(problem_to_array(problem, max_board_size=max_board_size))
-            solutions.append(solution_to_array(solution, max_board_size=max_board_size))
+            problems.append(problem_to_matrix(problem, max_board_size=max_board_size))
+            solutions.append(solution_to_matrix(solution, max_board_size=max_board_size))
     return problems,solutions
