@@ -1,28 +1,10 @@
-from sklearn.model_selection import train_test_split
-from dataParser import parse_files,draw_game_from_2d_array
+from dataProcessing import process_data_for_training
 import numpy as np
 import tensorflow as tf
-from util import normalize_array,denormalize_array
 from tensorflow import keras
+from util import normalize_array,denormalize_array
 import copy
 import gpu
-
-def process_data_for_training(max_board_size=15,file_list=[]):
-    problems,solutions = parse_files(max_board_size=max_board_size,file_list=file_list)
-    features=[]
-    labels=[]
-    
-    features = np.array(problems).reshape(len(problems),max_board_size,max_board_size,1)
-    max_val = np.max(problems)  # note we are using 1-indexed colours here
-    features = normalize_array(features,max_val)
-
-    labels = np.array(solutions).reshape(len(solutions),max_board_size*max_board_size,1)
-
-    del(problems)
-    del(solutions)
-
-    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.05, random_state=42)
-    return x_train, x_test, y_train, y_test, max_val
 
 def get_model(max_board_size=15, max_number_of_colours=15):
 
@@ -43,7 +25,7 @@ def get_model(max_board_size=15, max_number_of_colours=15):
 
 def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[]):
 
-    x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list)
+    x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list,with_permutations=True)
 
     model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val)
 
@@ -53,6 +35,8 @@ def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[])
     model.fit(x_train, y_train, batch_size=32, epochs=epochs)
 
     model.save(model_path)
+
+    return x_train, x_test, y_train, y_test, max_val
 
 def solve_game_sequentially(game_array,max_board_size=15, max_number_of_colours=15, model_path='model_1'):
     model = keras.models.load_model(model_path)
@@ -103,23 +87,23 @@ def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_co
         
         pred = solve_game_sequentially(game_array=feat,max_board_size=max_board_size, max_number_of_colours=max_number_of_colours,model_path=model_path)
         true = labels[i].reshape((max_board_size,max_board_size))
-        if(abs(true - pred).sum()==0):
+        diff = (true != pred).sum()
+        if(diff==0):
             correct += 1
         
     return correct/feats.shape[0]
 
 gpu.limit_gpu()
 
-model_path = 'models\model_five_3'
-# train_model(epochs=1000,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
+model_path = 'models\model_five_permutations'
+# x_train, x_test, y_train, y_test, max_val = train_model(epochs=5,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
 x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=5,file_list=['five.txt','afive.txt'])
-# game_array = solve_game_sequentially(x_test[0],max_board_size=5,max_number_of_colours=max_val,model_path=model_path)
-# denorm = denormalize_array(x_test[0].squeeze(),max_val)
+# denorm = denormalize_array(x_train[0].squeeze(),max_val)
 # print(denorm)
-# print(y_test[0].reshape(5,5))
+# print(y_train[0].reshape(5,5))
+# game_array = solve_game_sequentially(x_train[0],max_board_size=5,max_number_of_colours=max_val,model_path=model_path)
 # print(game_array.squeeze())
-# game_array = solve_game_by_square(x_test[0],max_board_size=5,max_number_of_colours=max_val+1,model_path=model_path)
 
 
-acc = test_accuracy(x_train[:10],y_train[:10],model_path,max_board_size=5,max_number_of_colours=max_val)
+acc = test_accuracy(x_test,y_test,model_path,max_board_size=5,max_number_of_colours=max_val)
 print(acc)

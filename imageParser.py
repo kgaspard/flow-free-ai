@@ -143,19 +143,22 @@ def string_to_matrices(string, max_board_size=25):
 ##### Parse files
 
 def parse_saved_files(max_board_size=25,file_list=[]):
+  files = file_list if file_list else ['data/image_parser_output.txt']
   problems = []
   solutions = []
-  for f in file_list:
-      levels = open(f, "r").read().splitlines()
-      for level in levels:
-        problem,solution = string_to_matrices(level,max_board_size=max_board_size)
+  for f in files:
+    levels = open(f, "r").read().splitlines()
+    for level in levels:
+      problem,solution = string_to_matrices(level,max_board_size=max_board_size)
+      problems.append(problem)
+      solutions.append(solution)
   return problems,solutions
 
 def main():
   packs = [('regular',150),('bonus',150),('green',20)]
   packs_five = [('regular',1,30),('bonus',1,30),('blue',1,30),('green',1,30),('intro',1,8),('kids',1,60)]
   url_list = url_list_generator(packs_five)
-  url_list = local_file_list_generator('data/images/')
+  url_list = local_file_list_generator('data/images/five/')
   
   export_to_file(url_list)
 
