@@ -1,6 +1,7 @@
 __pycache__/
 .vscode/
-data/
+data/images/
+data/image_parser_output_backup.txt
 models/
 test.py
 startup_scripts

@@ -6,13 +6,13 @@ from util import normalize_array,denormalize_array
 import copy
 import gpu
 
-def get_model(max_board_size=15, max_number_of_colours=15):
+def get_model(max_board_size=15, max_number_of_colours=15, kernel_size=3):
 
     model = keras.models.Sequential()
 
-    model.add(keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding='same', input_shape=(max_board_size,max_board_size,1)))
+    model.add(keras.layers.Conv2D(64, kernel_size=(kernel_size,kernel_size), activation='relu', padding='same', input_shape=(max_board_size,max_board_size,1)))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding='same'))
+    model.add(keras.layers.Conv2D(64, kernel_size=(kernel_size,kernel_size), activation='relu', padding='same'))
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.Conv2D(128, kernel_size=(1,1), activation='relu', padding='same'))
 
@@ -23,9 +23,9 @@ def get_model(max_board_size=15, max_number_of_colours=15):
     
     return model
 
-def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[]):
+def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[], test_size=0.05):
 
-    x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list,with_permutations=True)
+    x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list,with_permutations=True,test_size=test_size)
 
     model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val)
 
@@ -95,9 +95,9 @@ def test_accuracy(feats, labels, model_path, max_board_size=15, max_number_of_co
 
 gpu.limit_gpu()
 
-model_path = 'models\model_five_permutations'
-# x_train, x_test, y_train, y_test, max_val = train_model(epochs=5,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'])
-x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=5,file_list=['five.txt','afive.txt'])
+model_path = 'models\model_five_permutations_20_epochs'
+# x_train, x_test, y_train, y_test, max_val = train_model(epochs=20,model_path=model_path,max_board_size=5,file_list=['five.txt','afive.txt'], test_size=0.05)
+x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=5,file_list=['five.txt','afive.txt'], with_permutations=False, test_size=0.05)
 # denorm = denormalize_array(x_train[0].squeeze(),max_val)
 # print(denorm)
 # print(y_train[0].reshape(5,5))
@@ -106,4 +106,5 @@ x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_
 
 
 acc = test_accuracy(x_test,y_test,model_path,max_board_size=5,max_number_of_colours=max_val)
+print(len(x_test))
 print(acc)

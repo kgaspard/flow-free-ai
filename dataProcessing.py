@@ -26,7 +26,7 @@ def generate_matrix_permutations(matrix,max_val):
     matrices.append(permute_matrix(matrix,permutation,max_val))
   return matrices
 
-def process_data_for_training(max_board_size=15,file_list=[],with_permutations=False):
+def process_data_for_training(max_board_size=15,file_list=[],with_permutations=False, test_size=0.05):
     problems0,solutions0 = combine_data_files_and_images(max_board_size=max_board_size,file_list=file_list)
     features=[]
     labels=[]
@@ -54,5 +54,5 @@ def process_data_for_training(max_board_size=15,file_list=[],with_permutations=F
     del(problems)
     del(solutions)
 
-    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.05, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=test_size, random_state=42)
     return x_train, x_test, y_train, y_test, max_val
