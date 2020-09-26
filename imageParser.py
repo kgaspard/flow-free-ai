@@ -71,7 +71,7 @@ def get_grid_square_dark_peaks(img):
       output[iy,ix] = black_index
   return output
 
-def smart_corners(img):
+def smart_corners(img): # doesn't perform nearly as reliably
   img = rgb2gray(img[128:441])
   plt.imshow(img)
   plt.show()

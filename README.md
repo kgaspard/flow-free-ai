@@ -13,6 +13,13 @@ python solver.py
 python solver.py -h
 ```
 
+Examples:
+```python
+python solver.py -a search -g medium
+python solver.py -a exactQ
+python solver.py -a cnn
+```
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 

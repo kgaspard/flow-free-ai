@@ -1,7 +1,7 @@
 import game as Game
 from agent import SearchAgent,GameStateAgent,QLearningAgent,ApproximateQLearningAgent
 import util
-import dataParser
+from trainModel import model_accuracy
 
 def search_based(options):
   agent = SearchAgent(options.game)
@@ -24,8 +24,8 @@ def approxQ(options):
   print(qLearningAgent.adopt_policy(draw=True, game=options.game))
 
 def cnn(options):
-  new_game = dataParser.test_game()
-  new_game.draw()
+  options = util.parseCommandLine()
+  model_accuracy(model_path=options.modelpath,build_model=False,draw=False)
 
 def main():
   options = util.parseCommandLine()
