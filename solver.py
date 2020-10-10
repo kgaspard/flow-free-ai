@@ -25,7 +25,8 @@ def approxQ(options):
 
 def cnn(options):
   options = util.parseCommandLine()
-  model_accuracy(model_path=options.modelpath,build_model=False,draw=False)
+  build_model = options.buildmodel or False
+  model_accuracy(model_path=options.modelpath,epochs=options.numTraining,build_model=build_model,draw=False)
 
 def main():
   options = util.parseCommandLine()

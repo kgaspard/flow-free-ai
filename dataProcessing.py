@@ -26,7 +26,14 @@ def generate_matrix_permutations(matrix,max_val):
     matrices.append(permute_matrix(matrix,permutation,max_val))
   return matrices
 
-def process_data_for_training(max_board_size=15,file_list=[],with_permutations=False, test_size=0.05):
+def generate_matrix_rotations(matrix):
+  rotations = []
+  for i in range(4):
+    rotations.append(np.rot90(matrix,i))
+    rotations.append(np.rot90(np.flip(matrix,i%2),i//2))
+  return rotations
+
+def process_data_for_training(max_board_size=15,file_list=[],with_permutations=False, with_rotations=False, test_size=0.05):
     problems0,solutions0 = combine_data_files_and_images(max_board_size=max_board_size,file_list=file_list)
     features=[]
     labels=[]
@@ -39,12 +46,22 @@ def process_data_for_training(max_board_size=15,file_list=[],with_permutations=F
     else:
       problems = []
       solutions = []
-      for problem in problems0:
-        for permutation in generate_matrix_permutations(problem,max_val):
-          problems.append(permutation)
-      for solution in solutions0:
-        for permutation in generate_matrix_permutations(solution,max_val):
-          solutions.append(permutation)
+      if with_rotations:
+        for problem in problems0:
+          for permutation in generate_matrix_permutations(problem,max_val):
+            for rotation in generate_matrix_rotations(permutation):
+              problems.append(rotation)
+        for solution in solutions0:
+          for permutation in generate_matrix_permutations(solution,max_val):
+            for rotation in generate_matrix_rotations(permutation):
+              solutions.append(rotation)
+      else:
+        for problem in problems0:
+          for permutation in generate_matrix_permutations(problem,max_val):
+            problems.append(permutation)
+        for solution in solutions0:
+          for permutation in generate_matrix_permutations(solution,max_val):
+            solutions.append(permutation)
     
     features = np.array(problems).reshape(len(problems),max_board_size,max_board_size,1)
     features = normalize_array(features,max_val)

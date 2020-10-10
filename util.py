@@ -84,6 +84,7 @@ def parseCommandLine():
     parser.add_option('-e', '--epsilon', dest='epsilon', help='training epsilon (QLearning)', type='float', default=0.4)
     parser.add_option('--alpha', dest='alpha', help='Q-learning training alpha / learning rate', type='float', default=0.5)
     parser.add_option('-m', '--modelpath', dest='modelpath', help='The file path (from root) of the model to use', default='models\model_five_permutations_20_epochs')
+    parser.add_option('-b', '--buildModel', action="store_true", dest='buildmodel', help='Build a new model (true if included) or load existing one')
     options, rest_of_command = parser.parse_args()
     if len(rest_of_command) != 0: raise Exception('Command line input not understood: ' + str(rest_of_command))
     return options

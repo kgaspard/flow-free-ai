@@ -18,6 +18,7 @@ Examples:
 python solver.py -a search -g medium
 python solver.py -a exactQ
 python solver.py -a cnn
+python solver.py -a cnn -m models_backup/model_five_permutations_rotations_5_epochs -n 5 -b
 ```
 
 ## Contributing
