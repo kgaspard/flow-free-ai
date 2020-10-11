@@ -9,14 +9,15 @@ from util import normalize_array,denormalize_array
 import copy
 import gpu
 
-def get_model(max_board_size=15, max_number_of_colours=15, kernel_size=3):
+def get_model(max_board_size=15, max_number_of_colours=15, kernel_size=3, middle_layer_count=1):
 
     model = keras.models.Sequential()
 
     model.add(keras.layers.Conv2D(64, kernel_size=(kernel_size,kernel_size), activation='relu', padding='same', input_shape=(max_board_size,max_board_size,1)))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Conv2D(64, kernel_size=(kernel_size,kernel_size), activation='relu', padding='same'))
-    model.add(keras.layers.BatchNormalization())
+    for i in range(middle_layer_count):
+        model.add(keras.layers.Conv2D(64, kernel_size=(kernel_size,kernel_size), activation='relu', padding='same'))
+        model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.Conv2D(128, kernel_size=(1,1), activation='relu', padding='same'))
 
     model.add(keras.layers.Flatten())
@@ -30,7 +31,7 @@ def train_model(epochs=2, model_path='model_1', max_board_size=15, file_list=[],
 
     x_train, x_test, y_train, y_test, max_val = process_data_for_training(max_board_size=max_board_size, file_list=file_list,with_permutations=True, with_rotations=False, test_size=test_size)
 
-    model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val)
+    model = get_model(max_board_size=max_board_size, max_number_of_colours=max_val, middle_layer_count=1)
 
     adam = keras.optimizers.Adam(lr=.001)
     model.compile(loss='sparse_categorical_crossentropy', optimizer=adam)

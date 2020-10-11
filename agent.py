@@ -273,7 +273,7 @@ class ApproximateQLearningAgent(QLearningAgent):
         features["valves_in_boxes"] = valves_in_boxes
         features["boxes_with_no_valves"] = boxes_with_no_valves
         features["is_wall_hug"] = featureFunctions.is_wall_hug(state,next_state)
-        features.divideAll(10.0) # prevent divergence of values
+        features.divideAll(1000.0) # prevent divergence of values
         return features
 
     def getQValue(self, state,action,features=None):
@@ -293,3 +293,17 @@ class ApproximateQLearningAgent(QLearningAgent):
         difference = (reward + (self.gamma * self.computeValueFromQValues(state=nextState))) - self.getQValue(state,action,features)
         for feature in features:
             self.weights[feature] += self.alpha * difference * features[feature]
+
+    def plot_features(features):
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        x=[]
+        y=[]
+        for key in features:
+            x.append(key)
+            y.append(features[key])
+        ax.bar(x,y)
+        ax.axhline(y=0, color='k')
+        plt.xlabel('Approximate Q-learning feature weights')
+        plt.show()
